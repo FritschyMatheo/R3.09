@@ -6,9 +6,9 @@ def byeclient():
     Fonction qui dit aurevoir au client
     """
     print(f"Fermeture de la connexion du client : {address}")
-    message = "Au revoir client"
-    print(f"Serveur : {message}")
-    conn.send(message.encode())
+    bye = "Au revoir client"
+    print(f"Serveur : {bye}")
+    conn.send(bye.encode())
     conn.close()
 
 def arret():
@@ -37,6 +37,8 @@ serveur_socket.bind((ip, port))
 serveur_socket.listen(1)
 
 while message != "arret" and reply != "arret":
+    message = "start"
+    reply = "start"
     print("En attente de connexion...")
     conn, address = serveur_socket.accept()
     print(f"Client {address} connecté")
@@ -52,7 +54,6 @@ while message != "arret" and reply != "arret":
         print(f"Client : {message}")
 
         if message == "bye":
-            #Message bye
             byeclient()
         elif message == "arret":
             arret()
