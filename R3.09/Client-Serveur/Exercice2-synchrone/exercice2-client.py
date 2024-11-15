@@ -48,3 +48,9 @@ while True:
     else:
         reply = client_socket.recv(1024).decode()
         print(f"Server : {reply}")
+        if reply == "arret":
+            arretserv()
+            break
+        elif reply == "bye":
+            bye()
+            break

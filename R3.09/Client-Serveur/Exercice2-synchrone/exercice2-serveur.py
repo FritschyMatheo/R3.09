@@ -10,6 +10,8 @@ def byeclient():
     print(f"Serveur : {message}")
     conn.send(message.encode())
     conn.close()
+    global connecte
+    connecte = False
 
 def arret():
     """
@@ -23,6 +25,9 @@ def arret():
     conn.close()
     print("Fermeture du serveur")
     serveur_socket.close()
+    global connecte, stop
+    stop = True
+    connecte = False
 
 #Configuration connexion
 serveur_socket = socket.socket()
@@ -52,15 +57,15 @@ while True:
         if message == "bye":
             #Message bye
             byeclient()
-            connecte = False
         elif message == "arret":
             arret()
-            stop = True
-            connecte = False
         else:
             time.sleep(0.5)
-            reply = "Reponse serveur"
+            reply = input("Serveur : ")
             conn.send(reply.encode())
-            print(f"Server : {reply}")
+            if reply == "arret":
+                arret()
+            elif reply == "bye":
+                byeclient()
     if stop:
         break
