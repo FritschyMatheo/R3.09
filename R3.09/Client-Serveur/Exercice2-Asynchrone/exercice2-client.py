@@ -1,3 +1,5 @@
+import Client
+import Serveur
 import socket
 import time
 
@@ -23,12 +25,10 @@ def arretserv():
     print("Déconnecté du serveur")
 
 
-#Configuration connexion
-client_socket = socket.socket()
-port = 10000
-ip = "127.0.0.1"
+#Configuration connexion et etablissement de la connexion
+client = Client.Client("Client")
 
-#Etablissement de la connexion
+
 print("Connexion au serveur...")
 client_socket.connect((ip, port))
 testco = client_socket.recv(1024).decode()
