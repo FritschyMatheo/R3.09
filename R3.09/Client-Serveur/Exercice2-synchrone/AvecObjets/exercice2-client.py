@@ -55,3 +55,28 @@ class Client():
         print(f"Server : {reply}")
         time.sleep(1)
         print("Déconnecté du serveur")
+
+if __name__ == "__main__":
+
+    message = "start"
+    reply = "start"
+
+    client = Client("Client test")
+
+    client.connexion("127.0.0.1", 1000)
+    while message != "arret" and reply != "arret" and message != "bye" and reply != "bye":
+        message = client.ecrit()
+        if message == "bye":
+            client.bye()
+            break
+        elif message == "arret":
+            client.arretserv()
+            break
+        else:
+            reply = client.ecoute()
+            if reply == "arret":
+                client.arretserv()
+                break
+            elif reply == "bye":
+                client.bye()
+                break

@@ -70,3 +70,33 @@ class Serveur():
         conn.close()
         print("Fermeture du serveur")
         self.__socket.close()
+        
+if __name__ == "__main__":
+
+    message = "start"
+    reply = "start"
+
+    serveur = Serveur("Serveur test")
+
+    while message != "arret" and reply != "arret":
+
+        message = "start"
+        reply = "start"
+
+        conn = serveur.connexion()
+
+        while message != "bye" and message != "arret" and reply != "bye" and reply != "arret":
+            message = "start"
+            reply = "start"
+
+            message = serveur.ecoute(conn)
+            if message == "bye":
+                serveur.byeclient(conn)
+            elif message == "arret":
+                serveur.arret(conn)
+            else:
+                reply = serveur.ecrit(conn)
+                if reply == "arret":
+                    serveur.arret(conn)
+                elif reply == "bye":
+                    serveur.byeclient(conn)
