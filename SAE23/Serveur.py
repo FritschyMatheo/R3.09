@@ -54,6 +54,7 @@ class Serveur():
         if self.occupe:
             servoccupe = "Désolé mais le serveur est occupé."
             conn.send(servoccupe.encode())
+            return servoccupe
         else:
             message = conn.recv(1024).decode()
             print(f"Client : {message}")

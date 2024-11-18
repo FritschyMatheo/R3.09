@@ -1,4 +1,5 @@
 import Client
+import threading
 
 message = "start"
 reply = "start"
@@ -7,7 +8,8 @@ client = Client.Client("Client test")
 
 client.connexion()
 while message != "arret" and reply != "arret" and message != "bye" and reply != "bye":
-    message = client.ecrit()
+    threadServeur = threading.Thread(target=client.ecrit)
+    message = threadServeur.start()
     if message == "bye":
             client.bye()
             break
