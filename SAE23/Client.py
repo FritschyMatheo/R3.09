@@ -1,5 +1,6 @@
 import socket
 import time
+import threading
 
 # Fichier de la classe Client
 

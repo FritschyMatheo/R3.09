@@ -1,26 +1,22 @@
 import Client
 import threading
 
-message = "start"
-reply = "start"
+consigneclient = "start"
+consigneserveur = "start"
 
 client = Client.Client("Client test")
 
 client.connexion()
-while message != "arret" and reply != "arret" and message != "bye" and reply != "bye":
-    threadServeur = threading.Thread(target=client.ecrit)
-    message = threadServeur.start()
-    if message == "bye":
+
+threadEcoute = threading.Thread(target=client.ecoute)
+threadEcoute.start()
+
+while consigneclient != "arret" and consigneserveur != "arret" and consigneclient != "bye" and consigneserveur != "bye":
+    consigneclient = client.ecrit()
+
+    if consigneclient == "bye":
             client.bye()
-            break
-    elif message == "arret":
+    elif consigneclient == "arret":
         client.arretserv()
-        break
-    else:
-        reply = client.ecoute()
-        if reply == "arret":
-            client.arretserv()
-            break
-        elif reply == "bye":
-            client.bye()
-            break
+
+threadEcoute.join()

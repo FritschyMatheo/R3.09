@@ -1,12 +1,13 @@
 import socket
 import time
+import threading
 
 # Fichier de la classe Serveur
 
 class Serveur():
 
     def __init__(self,nom :str, ip :str = "127.0.0.1", port :int = 1000, occupe :bool = False):
-        self.__nom = nom
+        self.__nom :str = nom
         self.__ip :str = ip
         self.__port :int = port
         self.__socket :socket = socket.socket()
@@ -35,7 +36,7 @@ class Serveur():
         return self.__socket
     
     @property
-    def occupe(self):
+    def occupe(self) -> bool:
         return self.__occupe
     
     
@@ -46,19 +47,38 @@ class Serveur():
         print("En attente de connexion...")
         conn, address = self.__socket.accept()
         print(f"Client {address} connecté")
-        acceptation = f"Connexion au serveur {self.nom} acceptée ({self.ip}), vous pouvez communiquer."
-        conn.send(acceptation.encode())
+        threadEcoute = threading.Thread(target= self.ecoute, args=[conn])
+        threadEcoute.start()
+        #acceptation = f"Connexion au serveur {self.nom} acceptée ({self.ip}), vous pouvez communiquer."
+        #conn.send(acceptation.encode())
         return conn
     
     def ecoute(self, conn):
+        consigneclient = "start"
+        consigneserveur = "start"
         if self.occupe:
             servoccupe = "Désolé mais le serveur est occupé."
             conn.send(servoccupe.encode())
             return servoccupe
         else:
-            message = conn.recv(1024).decode()
-            print(f"Client : {message}")
-            return message
+            try:
+                while consigneclient != "arret" and consigneclient != "bye" and consigneserveur != "arret" and consigneserveur != "bye":
+                    consigneclient = conn.recv(1024).decode()
+                    if message == "bye":
+                        self.byeclient(conn)
+                    elif message == "arret":
+                        self.arret(conn)
+                    else:
+                        print(f"Client : {message}")
+                    #return message
+            except ConnectionAbortedError:
+                print("Connexion au client fermée")
+            except ConnectionError:
+                print("Connexion stopée de manière inattendue")
+            finally:
+                conn.close()
+                print("Fermeture du serveur")
+                
     
     def ecrit(self, conn):
         reply = input("Serveur : ")
@@ -66,18 +86,18 @@ class Serveur():
         return reply
     
     def byeclient(self, conn):
-        #print(f"Fermeture de la connexion du client : {clientaddr}")
         bye = "Au revoir client"
         print(f"Serveur : {bye}")
         conn.send(bye.encode())
         conn.close()
+        print("Connexion au client terminée")
 
     def arret(self, conn):
         print("Fermeture de la connexion du client")
         deco = "Vous allez être déconnecté"
-        print(f"Serveur : {deco}")
         conn.send(deco.encode())
-        time.sleep(1.5)
+        time.sleep(1)
         conn.close()
+        print("Connexion au client fermée")
         print("Fermeture du serveur")
         self.__socket.close()

@@ -16,15 +16,25 @@ if __name__ == "__main__":
         sys.exit(1)
 
     connexions = []
-    consigneclient = ""
-    consigneserveur = ""
+    consigneclient = "start"
+    consigneserveur = "start"
 
     serveur = Serveur.Serveur("Serveur test", ipserveur, portserveur)
 
     while consigneclient != "arret" and consigneserveur != "arret":
-        conn = serveur.connexion()
+        try :
+            conn = serveur.connexion()
+            consigneclient = ""
+            consigneserveur = ""
+            threadEcoute = threading.Thread(target=serveur.ecoute, args=[conn])
+            threadEcoute.start()
+        except KeyboardInterrupt:
+            print("Arrêt manuel du serv")
+        except Exception as e:
+            print(f"Erreur : {e}")
         while consigneclient != "arret" and consigneclient != "bye" and consigneserveur != "arret" and consigneserveur != "bye":
-            threadEcoute = threading.Thread(target= serveur.ecoute, args=[conn])
-            message = threadEcoute.start()
-            if message == "arret":
-                serveur.arret()
+            consigneserveur = serveur.ecrit(conn)
+            if consigneclient == "bye" or consigneserveur == "bye":
+                serveur.byeclient(conn)
+            elif consigneclient == "arret" or consigneserveur == "arret":
+                serveur.arret(conn)
