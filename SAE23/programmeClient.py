@@ -1,22 +1,9 @@
-import Client
-import threading
+from Client import *
+import sys
+from PyQt6.QtWidgets import *
 
-consigneclient = "start"
-consigneserveur = "start"
-
-client = Client.Client("Client test")
-
-client.connexion()
-
-threadEcoute = threading.Thread(target=client.ecoute)
-threadEcoute.start()
-
-while consigneclient != "arret" and consigneserveur != "arret" and consigneclient != "bye" and consigneserveur != "bye":
-    consigneclient = client.ecrit()
-
-    if consigneclient == "bye":
-            client.bye()
-    elif consigneclient == "arret":
-        client.arretserv()
-
-threadEcoute.join()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    app.exec()
