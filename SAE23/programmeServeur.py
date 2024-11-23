@@ -26,15 +26,18 @@ if __name__ == "__main__":
             conn = serveur.connexion()
             consigneclient = ""
             consigneserveur = ""
-            threadEcoute = threading.Thread(target=serveur.ecoute, args=[conn])
-            threadEcoute.start()
+            if serveur.occupe == False:
+                print("Lancement du thread de gestion du client")
+                serveur.occupe == True
+                conn.send("La connexion au serveur a bien été acceptée !".encode())
+                threadGestionClient = threading.Thread(target=serveur.gestionClient, args=[conn])
+                threadGestionClient.start()
+            else:
+                print("Le serveur est déjà occupé, rejet du client")
+                # Reponse au client
+                conn.send("Le serveur est occupé, veuillez reessayer plus tard ou vous connecter à un autre serveur".encode())
+                conn.close()
         except KeyboardInterrupt:
             print("Arrêt manuel du serv")
         except Exception as e:
             print(f"Erreur : {e}")
-        while consigneclient != "arret" and consigneclient != "bye" and consigneserveur != "arret" and consigneserveur != "bye":
-            consigneserveur = serveur.ecrit(conn)
-            if consigneclient == "bye" or consigneserveur == "bye":
-                serveur.byeclient(conn)
-            elif consigneclient == "arret" or consigneserveur == "arret":
-                serveur.arret(conn)

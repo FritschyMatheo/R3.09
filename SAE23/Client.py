@@ -18,27 +18,36 @@ class Client():
     def nom(self) -> str:
         return self.__nom
     
+    @property
+    def socket(self) -> str:
+        return self.__socket
+    
     def connexion(self, ip, port):
         """
         Fonction d'un client qui tente de se connecter à un serveur
         """
         try:
-            self.__socket.connect((ip, port))
+            self.socket.connect((ip, port))
             self.__connecte = True
         except Exception as erreur:
             raise erreur
     
-    def envoyer(self, demande):
+    def envoyerFichier(self, fichier):
         if self.__connecte == False:
             raise ConnectionError("Le client doit d'abord se connecter à un serveur.")
         try:
-            self.__socket.send(demande.encode())
-            return self.__socket.recv(1024).decode()
+            self.socket.send(fichier.encode())
+            return self.socket.recv(1024).decode()
         except Exception as e:
             print(f"Erreur lors de l'envoi du fichier : {e}")
+    
+    def envoyerDemande(self, demande):
+        if self.__connecte == False:
+            raise ConnectionError("Le client doit d'abord se connecter à un serveur.")
+        
 
     def bye(self):
-        self.__socket.close()
+        self.socket.close()
 
     def arretserv(self):
         print("(Le serveur va s'arrêter)")
@@ -48,7 +57,7 @@ class Client():
         print("Déconnecté du serveur")
 
     def ecoute(self):
-        reply = self.__socket.recv(1024).decode()
+        reply = self.socket.recv(1024).decode()
         print(f"Server : {reply}")
         return reply
 
@@ -96,15 +105,22 @@ class MainWindow(QMainWindow):
         self.editFichier = QPlainTextEdit()
         self.chargerFichier = QPushButton("Choisir fichier")
         self.envoyer = QPushButton("Envoyer")
-        #self.deco
+        self.arret = QPushButton("Eteindre serveur")
+        self.deco = QPushButton("Se déconnecter")
 
         self.grid2.addWidget(lab4, 0, 0, 1, 2)
         self.grid2.addWidget(self.editFichier, 1, 0, 1, 2)
         self.grid2.addWidget(self.chargerFichier, 2, 0)
         self.grid2.addWidget(self.envoyer, 2, 1)
+        self.grid2.addWidget(self.deco, 3, 0)
+        self.grid2.addWidget(self.arret, 3, 1)
+
 
         self.chargerFichier.clicked.connect(self.__actionCharger)
-        self.envoyer.clicked.connect(self.__actionEnvoyer)
+        #self.envoyer.clicked.connect(self.__actionEnvoyer)
+        self.arret.clicked.connect(self.__actionArret)
+        self.deco.clicked.connect(self.__actionDeco)
+
 
 
     def __actionConnexion(self):
@@ -114,7 +130,9 @@ class MainWindow(QMainWindow):
             #Ajouter des teste si le port est valide
             port = int(port)
             self.client.connexion(ip, port)
-            QMessageBox.information(self, "Connexion au serveur", "La connexion au serveur a fonctionné !")
+            retourserv = self.client.socket.recv(1024).decode()
+            QMessageBox.information(self, "Connexion au serveur", retourserv)
+
             self.setCentralWidget(self.widgetConnecte )
         except ValueError:
             QMessageBox.warning(self, "Erreur port", "Le port doit être un entier")
@@ -137,5 +155,10 @@ class MainWindow(QMainWindow):
         else:
             self.file_edit.setPlainText("Aucun fichier sélectionné")
 
-    def __actionEnvoyer(self):
-        pass
+    def __actionArret(self):
+        self.client.socket.send("arret".encode())
+        self.setCentralWidget(self.widgetConnexion)
+
+    def __actionDeco(self):
+        self.client.socket.send("bye".encode())
+        self.setCentralWidget(self.widgetConnexion )
