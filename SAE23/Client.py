@@ -49,13 +49,6 @@ class Client():
     def bye(self):
         self.socket.close()
 
-    def arretserv(self):
-        print("(Le serveur va s'arrêter)")
-        reply = self.socket.recv(1024).decode()
-        print(f"Server : {reply}")
-        time.sleep(1)
-        print("Déconnecté du serveur")
-
     def ecoute(self):
         reply = self.socket.recv(1024).decode()
         print(f"Server : {reply}")
@@ -132,12 +125,18 @@ class MainWindow(QMainWindow):
             self.client.connexion(ip, port)
             retourserv = self.client.socket.recv(1024).decode()
             QMessageBox.information(self, "Connexion au serveur", retourserv)
+            if retourserv == "Le serveur est occupé, veuillez reessayer plus tard ou vous connecter à un autre serveur":
+                self.port.setText("")
+                self.client.bye()
+            else:
+                self.setCentralWidget(self.widgetConnecte )
 
-            self.setCentralWidget(self.widgetConnecte )
         except ValueError:
             QMessageBox.warning(self, "Erreur port", "Le port doit être un entier")
+            self.port.setText("")
         except Exception as erreur:
             QMessageBox.critical(self, "Erreur de connexion", str(erreur))
+            self.port.setText("")
 
     def __actionQuitter(self):
         QApplication.exit(0)
@@ -156,9 +155,10 @@ class MainWindow(QMainWindow):
             self.file_edit.setPlainText("Aucun fichier sélectionné")
 
     def __actionArret(self):
-        self.client.socket.send("arret".encode())
         self.setCentralWidget(self.widgetConnexion)
+        self.client.socket.send("arret".encode())
 
     def __actionDeco(self):
-        self.client.socket.send("bye".encode())
         self.setCentralWidget(self.widgetConnexion )
+        self.client.socket.send("bye".encode())
+        self.client.bye()

@@ -6,7 +6,7 @@ import threading
 
 class Serveur():
 
-    def __init__(self,nom :str, ip :str = "127.0.0.1", port :int = 1000, occupe :bool = False):
+    def __init__(self,nom :str, ip :str = "127.0.0.1", port :int = 1000, occupe :bool = False, consigne :str = ""):
         self.__nom :str = nom
         self.__ip :str = ip
         self.__port :int = port
@@ -14,6 +14,7 @@ class Serveur():
         self.__socket.bind((self.__ip, self.__port))
         self.__socket.listen(1)
         self.__occupe = occupe
+        self.__consigne = consigne
         print(self)
 
     def __str__(self) -> str:
@@ -32,7 +33,7 @@ class Serveur():
         return self.__port
     
     @property
-    def socket(self):
+    def socket(self) -> socket:
         return self.__socket
     
     @property
@@ -41,24 +42,41 @@ class Serveur():
     
     @occupe.setter
     def occupe(self, etat):
-        self.__occupe = etat    
+        self.__occupe = etat
+
+    @property
+    def consigne(self) -> str:
+        return self.__consigne
+    
+    @consigne.setter
+    def consigne(self, cons):
+        self.__consigne = cons
     
     
     def connexion(self):
         """
         Fonction d'un serveur qui attend une connexion et qui valide vers le client quand c'est bon.
         """
-        print("En attente de connexion...")
-        conn, address = self.__socket.accept()
-        print(f"Client {address} connecté")
-        return conn
+        try:
+            print(self.__consigne)
+            print("En attente de connexion...")
+            conn, address = self.__socket.accept()
+            print(f"Client {address} connecté")
+            return conn
+        except KeyboardInterrupt:
+            print("Arrêt manuel du serv")
+            self.consigne = "arret"
     
     def gestionClient(self, conn):
         consigneclient = "start"
+        self.occupe = True
         try:
             while consigneclient != "arret" and consigneclient != "bye":
                 consigneclient = conn.recv(1024).decode()
-                if consigneclient == "bye":
+                if not consigneclient:
+                    print("Client déconnecté")
+                    break
+                elif consigneclient == "bye":
                     self.byeclient(conn)
                 elif consigneclient == "arret":
                     self.arret(conn)
@@ -71,9 +89,12 @@ class Serveur():
         except ConnectionError:
             print("Connexion stopée de manière inattendue")
             self.__socket.close()
+            self.occupe = False
         finally:
             conn.close()
-            print("Fermeture du serveur")
+            self.occupe = False
+            print("Déconnexion du client.")
+
 
     def executionCode(self):
         pass
@@ -94,3 +115,4 @@ class Serveur():
         print("Connexion au client fermée")
         print("Fermeture du serveur")
         self.__socket.close()
+        self.consigne = "arret"
