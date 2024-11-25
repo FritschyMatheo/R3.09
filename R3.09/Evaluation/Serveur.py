@@ -1,3 +1,13 @@
+"""
+
+        Fichier serveur de l'évaluation R309.
+
+        Lient GitHub : https://github.com/FritschyMatheo/R3.09-SAE3.02/tree/main/R3.09/Evaluation
+
+        Exercice non terminé donc non fonctionnel excepté la partie graphique...
+        
+"""
+
 import socket
 from PyQt6.QtWidgets import *
 
@@ -139,10 +149,6 @@ class MainWindow(QMainWindow):
         self.demarrer.clicked.connect(self.__actionDemarrer)
         self.quit.clicked.connect(self.__actionQuitter)
         self.arret.clicked.connect(self.__actionArret)
-
-        #self.arret.clicked.connect(self.__actionArret)
-        #self.deco.clicked.connect(self.__actionDeco)
-
 
 
     def __actionDemarrer(self):
