@@ -118,7 +118,7 @@ class MainWindow(QMainWindow):
         self.grid2.addWidget(self.arret, 3, 1)
 
 
-        #self.chargerFichier.clicked.connect(self.__actionCharger)
+        self.chargerFichier.clicked.connect(self.__actionCharger)
         #self.envoyer.clicked.connect(self.__actionEnvoyer)
         self.arret.clicked.connect(self.__actionArret)
         self.deco.clicked.connect(self.__actionDeco)
@@ -145,6 +145,19 @@ class MainWindow(QMainWindow):
         except Exception as erreur:
             QMessageBox.critical(self, "Erreur de connexion", str(erreur))
             self.port.setText("")
+
+    def __actionCharger(self):
+        fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier à exécuter", "", "Source Files (*.py *.c *.cpp *.cc *.java)")
+        if fichier:
+            try:
+                with open(fichier, "r", encoding="utf-8") as fich:
+                    contenu = fich.read()
+                self.editFichier.setPlainText(contenu)
+                QMessageBox.information(self, "Fichié chargé", "Le fichier a bien été chargé !")
+            except Exception as erreur:
+                QMessageBox.critical(self, "Erreur de chargement du fichier", str(erreur))
+        else:
+            self.editFichier.setPlainText("Aucun fichier sélectionné")
 
     def __actionQuitter(self):
         QApplication.exit(0)

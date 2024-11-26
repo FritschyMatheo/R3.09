@@ -66,6 +66,7 @@ class Serveur():
             print("Arrêt manuel du serv")
             self.consigne = "arret"
     
+
     def gestionClient(self, conn):
         consigneclient = "start"
         self.occupe = True
@@ -79,6 +80,9 @@ class Serveur():
                     self.byeclient(conn)
                 elif consigneclient == "arret":
                     self.arret(conn)
+                elif consigneclient == "charger":
+                    print("En attente du fichier client")
+                    self.attendFichier(conn)
                 else:
                     print(f"Le client a envoyé : {consigneclient}")
 
