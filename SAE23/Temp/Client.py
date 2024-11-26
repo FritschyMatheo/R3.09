@@ -1,4 +1,5 @@
 import socket
+import time
 from PyQt6.QtWidgets import *
 
 # Fichier de la classe Client
@@ -21,65 +22,59 @@ class Client():
     def socket(self) -> str:
         return self.__socket
     
-    @property
-    def connecte(self) -> bool:
-        return self.__connecte
-    
     def connexion(self, ip, port):
         """
         Fonction d'un client qui tente de se connecter à un serveur
         """
         try:
-            self.__socket.connect((ip, port))
+            self.socket.connect((ip, port))
             self.__connecte = True
         except Exception as erreur:
             raise erreur
+    
+    def envoyerFichier(self, fichier):
+        if self.__connecte == False:
+            raise ConnectionError("Le client doit d'abord se connecter à un serveur.")
+        try:
+            self.socket.send(fichier.encode())
+            return self.socket.recv(1024).decode()
+        except Exception as e:
+            print(f"Erreur lors de l'envoi du fichier : {e}")
     
     def envoyerDemande(self, demande):
         if self.__connecte == False:
             raise ConnectionError("Le client doit d'abord se connecter à un serveur.")
         else:
             self.__socket.send(demande.encode())
+        
+    def bye(self):
+        self.socket.close()
 
     def ecoute(self):
         reply = self.socket.recv(1024).decode()
         print(f"Server : {reply}")
         return reply
-        
-    def razSocket(self):
-        self.__socket = socket.socket()
 
-    def bye(self):
-        self.socket.close()
-        self.razSocket()
-        self.__connecte = False
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.client = Client()
         self.setWindowTitle("Affichage client")
-
-        self.stack = QStackedWidget()
-        self.setCentralWidget(self.stack)
-
         self.ecranConnexion()
-        self.ecranConnecte()
-        self.stack.addWidget(self.widgetConnexion)
-        self.stack.addWidget(self.widgetConnecte)
-        self.stack.setCurrentWidget(self.widgetConnexion)
 
     def ecranConnexion(self):
-
         # Ecran de connexion
         self.widgetConnexion = QWidget()
-        self.stack.addWidget(self.widgetConnexion)
+        self.setCentralWidget(self.widgetConnexion)
         self.grid = QGridLayout(self.widgetConnexion)
+
 
         lab1 = QLabel("Configuration de connexion :")
         lab2 = QLabel("Ip du serveur :")
         lab3 = QLabel("Port du serveur :")
         self.ip = QLineEdit("127.0.0.1")
+        self.ip.setEnabled(False)
         self.port = QLineEdit("")
         self.connexion = QPushButton("Se connecter")
         self.quit = QPushButton("Quitter")
@@ -96,11 +91,8 @@ class MainWindow(QMainWindow):
         self.connexion.clicked.connect(self.__actionConnexion)
         self.quit.clicked.connect(self.__actionQuitter)
 
-    def ecranConnecte(self):
-        
         # Ecran connecté
         self.widgetConnecte = QWidget()
-        self.stack.addWidget(self.widgetConnecte)
         self.grid2 = QGridLayout(self.widgetConnecte)
 
         lab4 = QLabel("Fichier choisi")
@@ -118,7 +110,7 @@ class MainWindow(QMainWindow):
         self.grid2.addWidget(self.arret, 3, 1)
 
 
-        #self.chargerFichier.clicked.connect(self.__actionCharger)
+        self.chargerFichier.clicked.connect(self.__actionCharger)
         #self.envoyer.clicked.connect(self.__actionEnvoyer)
         self.arret.clicked.connect(self.__actionArret)
         self.deco.clicked.connect(self.__actionDeco)
@@ -129,6 +121,7 @@ class MainWindow(QMainWindow):
         ip = self.ip.text()
         port = self.port.text()
         try:
+            #Ajouter des teste si le port est valide
             port = int(port)
             self.client.connexion(ip, port)
             retourserv = self.client.socket.recv(1024).decode()
@@ -137,7 +130,7 @@ class MainWindow(QMainWindow):
                 self.port.setText("")
                 self.client.bye()
             else:
-                self.stack.setCurrentWidget(self.widgetConnecte)
+                self.setCentralWidget(self.widgetConnecte )
 
         except ValueError:
             QMessageBox.warning(self, "Erreur port", "Le port doit être un entier")
@@ -149,14 +142,24 @@ class MainWindow(QMainWindow):
     def __actionQuitter(self):
         QApplication.exit(0)
 
+    def __actionCharger(self):
+        fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier", "", "Source Files (*.py *.c *.cpp *.cc *.java)")
+        if fichier:
+            try:
+                with open(fichier, "r", encoding="utf-8") as fich:
+                    contenu = fich.read()
+                self.file_edit.setPlainText(contenu)
+                QMessageBox.information(self, "Fichié chargé", "Le fichier a bien été chargé !")
+            except Exception as erreur:
+                QMessageBox.critical(self, "Erreur de chargement du fichier", str(erreur))
+        else:
+            self.file_edit.setPlainText("Aucun fichier sélectionné")
+
     def __actionArret(self):
+        self.setCentralWidget(self.widgetConnexion)
         self.client.socket.send("arret".encode())
-        self.client.bye()
-        self.port.setText("")
-        self.stack.setCurrentWidget(self.widgetConnexion)
 
     def __actionDeco(self):
+        self.setCentralWidget(self.widgetConnexion )
         self.client.socket.send("bye".encode())
         self.client.bye()
-        self.port.setText("")
-        self.stack.setCurrentWidget(self.widgetConnexion)

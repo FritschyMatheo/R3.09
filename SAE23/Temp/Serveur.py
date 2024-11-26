@@ -90,6 +90,8 @@ class Serveur():
             self.__socket.close()
             self.occupe = False
         finally:
+            conn.close()
+            self.occupe = False
             print("Déconnexion du client.")
 
 
@@ -108,7 +110,7 @@ class Serveur():
     def arret(self, conn):
         print("Fermeture de la connexion du client")
         time.sleep(1)
-        self.byeclient(conn)
+        conn.close()
         print("Connexion au client fermée")
         print("Fermeture du serveur")
         self.__socket.close()
