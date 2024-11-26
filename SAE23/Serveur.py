@@ -69,7 +69,6 @@ class Serveur():
 
     def gestionClient(self, conn):
         consigneclient = "start"
-        self.occupe = True
         try:
             while consigneclient != "arret" and consigneclient != "bye":
                 consigneclient = conn.recv(1024).decode()
@@ -80,9 +79,11 @@ class Serveur():
                     self.byeclient(conn)
                 elif consigneclient == "arret":
                     self.arret(conn)
-                elif consigneclient == "charger":
+                elif consigneclient == "envoie fichier":
                     print("En attente du fichier client")
-                    self.attendFichier(conn)
+                    self.occupe = True
+                    fichier = conn.recv(1024).decode()
+                    self.envoie("Vous avez envoyé le fichier : ", fichier)
                 else:
                     print(f"Le client a envoyé : {consigneclient}")
 

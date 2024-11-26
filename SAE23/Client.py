@@ -43,7 +43,6 @@ class Client():
 
     def ecoute(self):
         reply = self.socket.recv(1024).decode()
-        print(f"Server : {reply}")
         return reply
         
     def razSocket(self):
@@ -119,7 +118,7 @@ class MainWindow(QMainWindow):
 
 
         self.chargerFichier.clicked.connect(self.__actionCharger)
-        #self.envoyer.clicked.connect(self.__actionEnvoyer)
+        self.envoyer.clicked.connect(self.__actionEnvoyer)
         self.arret.clicked.connect(self.__actionArret)
         self.deco.clicked.connect(self.__actionDeco)
 
@@ -148,6 +147,7 @@ class MainWindow(QMainWindow):
 
     def __actionCharger(self):
         fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier à exécuter", "", "Source Files (*.py *.c *.cpp *.cc *.java)")
+        self.editFichier.setEnabled(True)
         if fichier:
             try:
                 with open(fichier, "r", encoding="utf-8") as fich:
@@ -158,6 +158,14 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Erreur de chargement du fichier", str(erreur))
         else:
             self.editFichier.setPlainText("Aucun fichier sélectionné")
+
+    def __actionEnvoyer(self):
+        self.client.socket.send("envoie fichier".encode())
+        self.editFichier.setEnabled(False)
+        self.editFichier.setPlainText("En attente du résultat du serveur...")
+        resultat = self.client.ecoute()
+        self.editFichier.setPlainText(resultat)
+
 
     def __actionQuitter(self):
         QApplication.exit(0)
