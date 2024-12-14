@@ -106,6 +106,7 @@ class MainWindow(QMainWindow):
         self.editFichier = QPlainTextEdit()
         self.chargerFichier = QPushButton("Choisir fichier")
         self.envoyer = QPushButton("Envoyer")
+        self.envoyer.setEnabled(False)
         self.arret = QPushButton("Eteindre serveur")
         self.deco = QPushButton("Se déconnecter")
 
@@ -153,15 +154,35 @@ class MainWindow(QMainWindow):
                 with open(fichier, "r", encoding="utf-8") as fich:
                     contenu = fich.read()
                 self.editFichier.setPlainText(contenu)
-                QMessageBox.information(self, "Fichié chargé", "Le fichier a bien été chargé !")
+                self.nomfichier = fichier.split("/")[-1]
+                self.fichier = contenu
+                self.envoyer.setEnabled(True)
+                QMessageBox.information(self, "Fichié chargé", f"Le fichier {self.nomfichier} a bien été chargé !")
             except Exception as erreur:
                 QMessageBox.critical(self, "Erreur de chargement du fichier", str(erreur))
+                self.envoyer.setEnabled(False)
         else:
             self.editFichier.setPlainText("Aucun fichier sélectionné")
+            self.envoyer.setEnabled(False)
 
     def __actionEnvoyer(self):
         self.client.socket.send("envoie fichier".encode())
         self.editFichier.setEnabled(False)
+
+        confirmation = QMessageBox.question(self, "Confirmation envoi de fichier", f"Voulez vous bien envoyer le fichier {self.nomfichier} ?",
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+        if confirmation == QMessageBox.StandardButton.Yes:
+            try:
+                self.client.socket.send(self.nomfichier.encode())
+                self.client.socket.send(self.fichier.encode())
+                QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi : {str(e)}")
+        else:
+            self.client.socket.send("annuler")
+            QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
+
         self.editFichier.setPlainText("En attente du résultat du serveur...")
         resultat = self.client.ecoute()
         self.editFichier.setPlainText(resultat)

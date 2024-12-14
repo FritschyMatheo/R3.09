@@ -80,10 +80,7 @@ class Serveur():
                 elif consigneclient == "arret":
                     self.arret(conn)
                 elif consigneclient == "envoie fichier":
-                    print("En attente du fichier client")
-                    self.occupe = True
-                    fichier = conn.recv(1024).decode()
-                    self.envoie("Vous avez envoyé le fichier : ", fichier)
+                    self.gestionFichier(conn)
                 else:
                     print(f"Le client a envoyé : {consigneclient}")
 
@@ -97,9 +94,23 @@ class Serveur():
         finally:
             print("Déconnexion du client.")
 
+    def gestionFichier(self, conn):
+        self.occupe = True
+        print("En attente du fichier client")
+        test = conn.recv(1024).decode()
+        if test == "annuler":
+            print("Opération annulée")
+            self.occupe = False
+        else:
+            nomFichier = test
+            print("Fichier recu : ", nomFichier)
+            fichier = conn.recv(1024).decode()
+            self.executionCode(fichier)
+            self.occupe = False
 
-    def executionCode(self):
-        pass
+
+    def executionCode(self, code):
+        print("resultat code", code)
     
     def envoie(self, conn, resultat):
         print("Envoie du resultat du code exécuté")

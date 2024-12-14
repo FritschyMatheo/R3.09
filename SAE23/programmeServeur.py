@@ -5,7 +5,10 @@ import sys
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
-        print("Il manque un ou plusieurs argument")
+        print("Il manque un ou plusieurs argument\nFormat attendu :\n   python mainServeur.py <IP> <Port>")
+        sys.exit(1)
+    elif len(sys.argv) > 3:
+        print("Il y a trop d'arguments")
         sys.exit(1)
 
     ipserveur = sys.argv[1]
