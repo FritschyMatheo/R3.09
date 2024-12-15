@@ -166,8 +166,9 @@ class MainWindow(QMainWindow):
             self.envoyer.setEnabled(False)
 
     def __actionEnvoyer(self):
-        self.client.socket.send("envoie fichier".encode())
+        self.fichier = self.editFichier.toPlainText()
         self.editFichier.setEnabled(False)
+        self.client.socket.send("envoie fichier".encode())
 
         confirmation = QMessageBox.question(self, "Confirmation envoi de fichier", f"Voulez vous bien envoyer le fichier {self.nomfichier} ?",
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
