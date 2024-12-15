@@ -178,14 +178,16 @@ class MainWindow(QMainWindow):
                 self.client.socket.send(self.fichier.encode())
                 QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
             except Exception as e:
-                QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi : {str(e)}")
+                QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
+            try:
+                self.editFichier.setPlainText("En attente du résultat du serveur...")
+                resultat = self.client.ecoute()
+                self.editFichier.setPlainText(resultat)
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Erreur lors de la reception du résultat du code : {str(e)}")
         else:
-            self.client.socket.send("annuler")
+            self.client.socket.send("annuler".encode())
             QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
-
-        self.editFichier.setPlainText("En attente du résultat du serveur...")
-        resultat = self.client.ecoute()
-        self.editFichier.setPlainText(resultat)
 
 
     def __actionQuitter(self):

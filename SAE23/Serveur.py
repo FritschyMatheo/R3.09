@@ -103,18 +103,19 @@ class Serveur():
             self.occupe = False
         else:
             nomFichier = test
-            print("Fichier recu : ", nomFichier)
+            print("Fichier recu : ", nomFichier, "\n")
             fichier = conn.recv(1024).decode()
-            self.executionCode(fichier)
+            resultatCode = self.executionCode(fichier)
+            self.envoie(conn, resultatCode)
             self.occupe = False
 
 
     def executionCode(self, code):
-        print("resultat code", code)
+        return str(f"resultat code :\n{(code)}")
     
     def envoie(self, conn, resultat):
         print("Envoie du resultat du code exécuté")
-        conn.send(resultat.encode())
+        conn.send(str(resultat).encode())
     
     def byeclient(self, conn):
         conn.close()

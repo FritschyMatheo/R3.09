@@ -4,16 +4,16 @@ import sys
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print("Il manque un ou plusieurs argument\nFormat attendu :\n   python mainServeur.py <IP> <Port>")
+    if len(sys.argv) != 2:
+        print("Il manque un ou plusieurs argument\nFormat attendu :\n   python mainServeur.py <Port>")
         sys.exit(1)
-    elif len(sys.argv) > 3:
+    elif len(sys.argv) > 2:
         print("Il y a trop d'arguments")
         sys.exit(1)
 
-    ipserveur = sys.argv[1]
+    ipserveur = "127.0.0.1"
     try:
-        portserveur = int(sys.argv[2])
+        portserveur = int(sys.argv[1])
     except ValueError:
         print("Le port doit être un entier.")
         sys.exit(1)
