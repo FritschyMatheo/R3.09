@@ -4,21 +4,26 @@ import sys
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print("Il manque un ou plusieurs argument\nFormat attendu :\n   python mainServeur.py <Port>")
-        sys.exit(1)
+    ipserveur = "127.0.0.1"
+
+    if len(sys.argv) == 1:
+        portserveur = 60000
+    elif len(sys.argv) == 2:
+        try:
+            portserveur = int(sys.argv[1])
+            if portserveur < 49152 or portserveur > 65535:
+                raise OSError
+        except ValueError:
+            print(f"Le port {portserveur} n'est pas un entier.")
+            sys.exit(1)
+        except OSError:
+            print(f"Le port {portserveur} n'est pas dans la plage dynamique des ports (49152 à 65535).")
+            sys.exit(1)
     elif len(sys.argv) > 2:
         print("Il y a trop d'arguments")
         sys.exit(1)
 
-    ipserveur = "127.0.0.1"
-    try:
-        portserveur = int(sys.argv[1])
-    except ValueError:
-        print("Le port doit être un entier.")
-        sys.exit(1)
-
-    serveur = Serveur.Serveur("Serveur test", ipserveur, portserveur)
+    serveur = Serveur.Serveur("Serveur", ipserveur, portserveur)
 
     while serveur.consigne != "arret":
         try :

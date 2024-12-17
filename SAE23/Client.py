@@ -1,5 +1,6 @@
 import socket
 from PyQt6.QtWidgets import *
+import time
 
 # Fichier de la classe Client
 
@@ -79,7 +80,7 @@ class MainWindow(QMainWindow):
         lab2 = QLabel("Ip du serveur :")
         lab3 = QLabel("Port du serveur :")
         self.ip = QLineEdit("127.0.0.1")
-        self.port = QLineEdit("")
+        self.port = QLineEdit("50000")
         self.connexion = QPushButton("Se connecter")
         self.quit = QPushButton("Quitter")
 
@@ -187,11 +188,14 @@ class MainWindow(QMainWindow):
                 self.client.socket.send(self.nomfichier.encode())
                 self.client.socket.send(self.fichier.encode())
                 QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
+                start = time.perf_counter()
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
             try:
                 self.editFichier.setPlainText("En attente du résultat du serveur...")
                 resultat = self.client.ecoute()
+                end = time.perf_counter()
+                QMessageBox.information(self, "Résultat du code", f"Le code a été exécuté et est revenu en {round(end - start, 2)} seconde(s) !")
                 self.editFichier.setPlainText(resultat)
                 self.lab4.setText("Retour serveur")
                 self.envoyer.setEnabled(False)

@@ -113,13 +113,16 @@ class Serveur():
 
     def executionCode(self, code):
         print("Execution du code...")
+        start = time.perf_counter()
+        time.sleep(5)
         try:
             resultat = subprocess.run(["python", "-c", code], text=True, capture_output=True, check=True)
             print("resultat :", resultat.stdout)
-            print("erreur :", resultat.stderr)
-            resultatFinal = f"Resultat code :\n{resultat.stdout}"
+            resultatFinal = resultat.stdout
+            end = time.perf_counter()
+            print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
         except subprocess.CalledProcessError as e:
-            resultatFinal = f"Erreur lors de l'exécution du code : {e}\n{e.stderr}"
+            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}\n\n{e.stderr}"
         return resultatFinal
     
     def envoie(self, conn, resultat):
