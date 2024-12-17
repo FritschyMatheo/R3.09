@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.widgetConnecte)
         self.grid2 = QGridLayout(self.widgetConnecte)
 
-        lab4 = QLabel("Fichier choisi")
+        self.lab4 = QLabel("Choisissez un fichier")
         self.editFichier = QPlainTextEdit()
         self.chargerFichier = QPushButton("Choisir fichier")
         self.envoyer = QPushButton("Envoyer")
@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         self.arret = QPushButton("Eteindre serveur")
         self.deco = QPushButton("Se déconnecter")
 
-        self.grid2.addWidget(lab4, 0, 0, 1, 2)
+        self.grid2.addWidget(self.lab4, 0, 0, 1, 2)
         self.grid2.addWidget(self.editFichier, 1, 0, 1, 2)
         self.grid2.addWidget(self.chargerFichier, 2, 0)
         self.grid2.addWidget(self.envoyer, 2, 1)
@@ -149,6 +149,7 @@ class MainWindow(QMainWindow):
     def __actionCharger(self):
         fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier à exécuter", "", "Source Files (*.py *.c *.cpp *.cc *.java)")
         self.editFichier.setEnabled(True)
+        self.lab4.setText("Fichier chargé")
         if fichier:
             try:
                 with open(fichier, "r", encoding="utf-8") as fich:
@@ -170,10 +171,18 @@ class MainWindow(QMainWindow):
         self.editFichier.setEnabled(False)
         self.client.socket.send("envoie fichier".encode())
 
-        confirmation = QMessageBox.question(self, "Confirmation envoi de fichier", f"Voulez vous bien envoyer le fichier {self.nomfichier} ?",
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        confirmation = QMessageBox(self)
+        confirmation.setWindowTitle("Confirmation envoi de fichier")
+        confirmation.setText(f"Voulez vous bien envoyer le fichier {self.nomfichier} ?")
+        
+        boutonOui = QPushButton("Oui")
+        boutonAnnuler = QPushButton("Annuler")
+        confirmation.addButton(boutonOui, QMessageBox.ButtonRole.YesRole)
+        confirmation.addButton(boutonAnnuler, QMessageBox.ButtonRole.NoRole)
 
-        if confirmation == QMessageBox.StandardButton.Yes:
+        retourConfirmation = confirmation.exec()
+
+        if confirmation.clickedButton() == boutonOui:
             try:
                 self.client.socket.send(self.nomfichier.encode())
                 self.client.socket.send(self.fichier.encode())
@@ -184,10 +193,13 @@ class MainWindow(QMainWindow):
                 self.editFichier.setPlainText("En attente du résultat du serveur...")
                 resultat = self.client.ecoute()
                 self.editFichier.setPlainText(resultat)
+                self.lab4.setText("Retour serveur")
+                self.envoyer.setEnabled(False)
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de la reception du résultat du code : {str(e)}")
         else:
             self.client.socket.send("annuler".encode())
+            self.lab4.setText("Choisir fichier ou envoyer celui ci")
             QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
 
 
