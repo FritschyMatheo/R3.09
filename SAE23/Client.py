@@ -1,7 +1,9 @@
 import socket
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
 import time
+import threading
 
 # Fichier de la classe Client
 
@@ -62,6 +64,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Affichage client")
         self.setWindowIcon(QIcon("altodisicon.png"))
 
+        # Partie timer d'attente du résultat du code
+        self.stopAttente = False
+        self.start = 0
+
+        # Partie graphique
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
@@ -161,7 +168,7 @@ class MainWindow(QMainWindow):
                 self.nomfichier = fichier.split("/")[-1]
                 self.fichier = contenu
                 self.envoyer.setEnabled(True)
-                QMessageBox.information(self, "Fichié chargé", f"Le fichier {self.nomfichier} a bien été chargé !")
+                #QMessageBox.information(self, "Fichié chargé", f"Le fichier {self.nomfichier} a bien été chargé !")
             except Exception as erreur:
                 QMessageBox.critical(self, "Erreur de chargement du fichier", str(erreur))
                 self.envoyer.setEnabled(False)
@@ -182,31 +189,69 @@ class MainWindow(QMainWindow):
         boutonAnnuler = QPushButton("Annuler")
         confirmation.addButton(boutonOui, QMessageBox.ButtonRole.YesRole)
         confirmation.addButton(boutonAnnuler, QMessageBox.ButtonRole.NoRole)
-
-        retourConfirmation = confirmation.exec()
+        
+        confirmation.exec()
 
         if confirmation.clickedButton() == boutonOui:
             try:
                 self.client.socket.send(self.nomfichier.encode())
                 self.client.socket.send(self.fichier.encode())
-                QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
-                start = time.perf_counter()
+                #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
-            try:
-                self.editFichier.setPlainText("En attente du résultat du serveur...")
-                resultat = self.client.ecoute()
-                end = time.perf_counter()
-                QMessageBox.information(self, "Résultat du code", f"Le code a été exécuté et est revenu en {round(end - start, 2)} seconde(s) !")
-                self.editFichier.setPlainText(resultat)
-                self.lab4.setText("Retour serveur")
-                self.envoyer.setEnabled(False)
-            except Exception as e:
-                QMessageBox.critical(self, "Erreur", f"Erreur lors de la reception du résultat du code : {str(e)}")
+            
+            self.start = time.perf_counter()
+            threadEcoute = threading.Thread(target=self.__attendreResultat)
+            threadEcoute.start()
+
         else:
             self.client.socket.send("annuler".encode())
-            self.lab4.setText("Choisir fichier ou envoyer celui ci")
-            QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
+            self.lab4.setText("Envoie du fichier annulé")
+            #QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
+    
+    def __attendreResultat(self):
+        self.editFichier.setPlainText("En attente du résultat du serveur...")
+        threadAttente = threading.Thread(target=self.__tempsAttente)
+        threadAttente.start()
+
+        try:
+            resultat = self.client.ecoute()
+            self.stopAttente = True
+
+            threadAttente.join()
+
+            QMetaObject.invokeMethod(
+                self.editFichier,
+                "setPlainText",
+                Qt.QueuedConnection,
+                Q_ARG(str, resultat)
+            )
+            QMetaObject.invokeMethod(
+                self.lab4,
+                "setText",
+                Qt.QueuedConnection,
+                Q_ARG(str, "Retour serveur :")
+            )
+
+            #QMessageBox.information(self, "Résultat du code", f"Le code a été exécuté et est revenu en {round(end - start, 2)} seconde(s) !")
+            #self.editFichier.setPlainText(resultat)
+            #self.lab4.setText("Retour serveur :")
+            self.envoyer.setEnabled(False)
+        except Exception as e:
+            self.stopAttente = True
+            threadAttente.join()
+            QMessageBox.critical(self, "Erreur", f"Erreur lors de la reception du résultat du code : {str(e)}")
+    
+    def __tempsAttente(self):
+        while self.stopAttente == False:
+            temps = round(time.perf_counter() - self.start, 2)
+            QMetaObject.invokeMethod(
+                self.lab4,
+                "setText",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(str, f"Temps depuis l'envoi : {temps} s")
+            )
+            time.sleep(0.5)
 
 
     def __actionQuitter(self):
