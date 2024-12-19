@@ -1,5 +1,6 @@
 import socket
 from PyQt6.QtWidgets import *
+from PyQt6.QtGui import QIcon
 import time
 
 # Fichier de la classe Client
@@ -59,6 +60,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.client = Client()
         self.setWindowTitle("Affichage client")
+        self.setWindowIcon(QIcon("altodisicon.png"))
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
