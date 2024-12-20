@@ -4,6 +4,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
 import time
 import threading
+from threading import Thread
 
 # Fichier de la classe Client
 
@@ -56,6 +57,21 @@ class Client():
         self.socket.close()
         self.razSocket()
         self.__connecte = False
+
+class CustomThread(Thread):
+    """ Class de Thread modifiée pour pouvoir retourner une fonction dans la partie chrono du temps d'exécution du code. Source : https://youtu.be/DPBm87pTByo"""
+    def __init__(self, group = None, target = None, name = None, args = (), kwargs = {}, Verbose = None):
+        super().__init__(self, group, target, name, args, kwargs)
+        self._return = None
+    
+    def run(self):
+        if self._target is not None:
+            self._return = self._target(*self._args, **self._kwargs)
+            # Le résultat est stocké dans self._return
+    
+    def join(self):
+        Thread.join(self)
+        return self._return # Le résultat self._return est retourné avec le join donc en arrêtant le thread
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -199,10 +215,13 @@ class MainWindow(QMainWindow):
                 #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
-            
+            self.envoyer.setEnabled(False)
             self.start = time.perf_counter()
             threadEcoute = threading.Thread(target=self.__attendreResultat)
-            threadEcoute.start()
+            resultatCode = threadEcoute.start()
+            self.lab4.setText("Résultat serveur :")
+            self.editFichier.setPlainText(resultatCode)
+            self.envoyer.setEnabled(False)
 
         else:
             self.client.socket.send("annuler".encode())
@@ -220,27 +239,12 @@ class MainWindow(QMainWindow):
 
             threadAttente.join()
 
-            QMetaObject.invokeMethod(
-                self.editFichier,
-                "setPlainText",
-                Qt.QueuedConnection,
-                Q_ARG(str, resultat)
-            )
-            QMetaObject.invokeMethod(
-                self.lab4,
-                "setText",
-                Qt.QueuedConnection,
-                Q_ARG(str, "Retour serveur :")
-            )
-
-            #QMessageBox.information(self, "Résultat du code", f"Le code a été exécuté et est revenu en {round(end - start, 2)} seconde(s) !")
-            #self.editFichier.setPlainText(resultat)
-            #self.lab4.setText("Retour serveur :")
-            self.envoyer.setEnabled(False)
+            return resultat
+        
         except Exception as e:
             self.stopAttente = True
             threadAttente.join()
-            QMessageBox.critical(self, "Erreur", f"Erreur lors de la reception du résultat du code : {str(e)}")
+            QMessageBox.critical(self, "Erreur", f"Erreur lors de l'attente du résultat du code : {str(e)}")
     
     def __tempsAttente(self):
         while self.stopAttente == False:
