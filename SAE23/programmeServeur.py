@@ -41,4 +41,6 @@ if __name__ == "__main__":
             print("Arrêt manuel du serv")
             serveur.consigne = "arret"
         except Exception as e:
+            print("Arrêt  du serveur suite à :")
             print(f"Erreur : {e}")
+            serveur.consigne = "arret"
