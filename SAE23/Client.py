@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         # Partie timer d'attente du résultat du code
         self.receptionResultat.connect(self.__actionResultat)
         self.stopAttente = False
-        #self.start = 0
+        self.tempsExec = 0
 
         # Partie graphique
         self.stack = QStackedWidget()
@@ -217,7 +217,6 @@ class MainWindow(QMainWindow):
                     self.client.socket.send(self.fichier.encode())
                     #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
                 self.envoyer.setEnabled(False)
-                self.start = time.perf_counter()
                 self.editFichier.setPlainText("En attente du résultat du serveur...")
                 self.arret.setEnabled(False)
                 self.deco.setEnabled(False)
@@ -236,6 +235,7 @@ class MainWindow(QMainWindow):
             #QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
     
     def __attendreResultat(self):
+        self.stopAttente = False
         threadAttente = threading.Thread(target=self.__tempsAttente)
         threadAttente.start()
         try:
@@ -255,9 +255,10 @@ class MainWindow(QMainWindow):
     
     def __tempsAttente(self):
         print("Thread temps lancé")
+        start = time.perf_counter()
         temps = 0
         while self.stopAttente == False:
-            temps = round(time.perf_counter() - self.start, 2)
+            temps = round(time.perf_counter() - start, 2)
             QMetaObject.invokeMethod(
                 self.lab4,
                 "setText",
@@ -283,6 +284,7 @@ class MainWindow(QMainWindow):
                 Qt.ConnectionType.QueuedConnection,
                 Q_ARG(str, f"Résultat serveur ({temps} s):")
             )
+        self.tempsExec = temps
         print(temps,"s")
     
     def __actionResultat(self, resultat):
