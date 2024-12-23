@@ -1,6 +1,7 @@
 import socket
 import time
 #import threading
+import os
 import subprocess
 
 # Fichier de la classe Serveur
@@ -119,13 +120,35 @@ class Serveur():
         else:
             nomFichier = test
             print("Fichier recu : ", nomFichier, "\n")
+            nomFichier, extension = os.path.splitext(nomFichier)
+            print("Chemin du fichier :", nomFichier)
+            print("Extension du fichier :", extension)
             fichier = conn.recv(1024).decode()
-            resultatCode = self.executionCode(fichier)
-            self.envoie(conn, resultatCode)
+            try:
+                if extension == ".txt":
+                    print("Fichier texte détecté")
+                    resultatCode = fichier
+                elif extension == ".py":
+                    print("fichier Python détecté")
+                    resultatCode = self.executionCodePython(fichier)
+                elif extension == ".c":
+                    print("fichier C détecté")
+                    resultatCode = self.executionCodeC(fichier)
+                elif extension == ".cpp":
+                    print("fichier C++ détecté")
+                    resultatCode = self.executionCodeCpp(fichier)
+                else:                    
+                    print("Extension non supportée :", extension)
+                    resultatCode = f"Extension du fichier {extension} non prise en charge"
+                self.envoie(conn, resultatCode)
+            except Exception as e:
+                print("Problème d'exécution du code :")
+                print(f"Erreur : {e}")
+                self.occupe = False
             self.occupe = False
+            
 
-
-    def executionCode(self, code):
+    def executionCodePython(self, code):
         print("Execution du code...")
         start = time.perf_counter()
         time.sleep(5)
@@ -138,6 +161,12 @@ class Serveur():
         except subprocess.CalledProcessError as e:
             resultatFinal = f"Erreur lors de l'exécution du code :\n{e}\n\n{e.stderr}"
         return resultatFinal
+    
+    def executionCodeC(self, code):
+        return code, "exécuté"
+    
+    def executionCodeCpp(self, code):
+        return code, "exécuté"
     
     def envoie(self, conn, resultat):
         print("Envoie du resultat du code exécuté")

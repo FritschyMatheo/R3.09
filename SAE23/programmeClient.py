@@ -6,4 +6,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    app.exec()
+    try:
+        app.exec()
+    except Exception as e:
+        QMessageBox.critical(None, "Erreur", f"Erreur dans le programme client :\n{e}")

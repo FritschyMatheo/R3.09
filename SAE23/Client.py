@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
             self.port.setText("")
 
     def __actionCharger(self):
-        fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier à exécuter", "", "Source Files (*.py *.c *.cpp *.cc *.java)")
+        fichier, _ = QFileDialog.getOpenFileName(self, "Ouvrir le fichier à exécuter", "", "Source Files (*.py *.c *.cpp *.cc *.java *.txt)")
         self.editFichier.setEnabled(True)
         self.lab4.setText("Fichier chargé")
         if fichier:
@@ -178,6 +178,7 @@ class MainWindow(QMainWindow):
                     contenu = fich.read()
                 self.editFichier.setPlainText(contenu)
                 self.nomfichier = fichier.split("/")[-1]
+                self.cheminfichier = fichier
                 self.fichier = contenu
                 self.envoyer.setEnabled(True)
                 #QMessageBox.information(self, "Fichié chargé", f"Le fichier {self.nomfichier} a bien été chargé !")
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
 
         if confirmation.clickedButton() == boutonOui:
             try:
-                self.client.socket.send(self.nomfichier.encode())
+                self.client.socket.send(self.cheminfichier.encode())
                 self.client.socket.send(self.fichier.encode())
                 #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
             except Exception as e:
@@ -231,7 +232,10 @@ class MainWindow(QMainWindow):
         try:
             print("Attente resultat")
             resultat = self.client.ecoute()
-            print("Recu")
+            if "non prise en charge" in resultat:
+                print("Fichier non pris en charge")
+            else:
+                print("Recu")
             self.stopAttente = True
             threadAttente.join()
             print(resultat)
@@ -243,6 +247,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Erreur", f"Erreur lors de l'attente du résultat du code : {str(e)}")
     
     def __tempsAttente(self):
+        temps = 0
         while self.stopAttente == False:
             temps = round(time.perf_counter() - self.start, 2)
             QMetaObject.invokeMethod(
@@ -251,8 +256,8 @@ class MainWindow(QMainWindow):
                 Qt.ConnectionType.QueuedConnection,
                 Q_ARG(str, f"Temps depuis l'envoi : {temps} s")
             )
-            print(temps,"s")
             time.sleep(0.02)
+        print(temps,"s")
     
     def __actionResultat(self, resultat):
         self.lab4.setText("Résultat serveur :")
