@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         # Partie timer d'attente du résultat du code
         self.receptionResultat.connect(self.__actionResultat)
         self.stopAttente = False
-        self.start = 0
+        #self.start = 0
 
         # Partie graphique
         self.stack = QStackedWidget()
@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
 
     def __actionEnvoyer(self):
         self.fichier = self.editFichier.toPlainText()
-        self.editFichier.setEnabled(False)
+        #self.editFichier.setEnabled(False)
         self.client.socket.send("envoie fichier".encode())
 
         confirmation = QMessageBox(self)
@@ -211,22 +211,24 @@ class MainWindow(QMainWindow):
                     self.client.socket.send("annuler".encode())
                     self.lab4.setText("Envoie du fichier annulé car il était vide.")
                     self.editFichier.setPlainText("")
-                    QMessageBox.critical(self, "Erreur", "Erreur lors de l'envoi du fichier, ce dernier est vide.")
+                    raise ValueError
                 else:
                     self.client.socket.send(self.cheminfichier.encode())
                     self.client.socket.send(self.fichier.encode())
                     #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
+                self.envoyer.setEnabled(False)
+                self.start = time.perf_counter()
+                self.editFichier.setPlainText("En attente du résultat du serveur...")
+                self.arret.setEnabled(False)
+                self.deco.setEnabled(False)
+                self.receptionResultat.connect(self.__actionResultat)
+                threadEcoute = threading.Thread(target=self.__attendreResultat)
+                threadEcoute.start()
+                self.envoyer.setEnabled(False)
+            except ValueError:
+                QMessageBox.critical(self, "Erreur", "Erreur lors de l'envoi du fichier, ce dernier est vide.")
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
-            self.envoyer.setEnabled(False)
-            self.start = time.perf_counter()
-            self.editFichier.setPlainText("En attente du résultat du serveur...")
-            self.arret.setEnabled(False)
-            self.deco.setEnabled(False)
-            self.receptionResultat.connect(self.__actionResultat)
-            threadEcoute = threading.Thread(target=self.__attendreResultat)
-            threadEcoute.start()
-            self.envoyer.setEnabled(False)
 
         else:
             self.client.socket.send("annuler".encode())
@@ -252,6 +254,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Erreur", f"Erreur lors de l'attente du résultat du code : {str(e)}")
     
     def __tempsAttente(self):
+        print("Thread temps lancé")
         temps = 0
         while self.stopAttente == False:
             temps = round(time.perf_counter() - self.start, 2)
@@ -283,7 +286,7 @@ class MainWindow(QMainWindow):
         print(temps,"s")
     
     def __actionResultat(self, resultat):
-        #♣self.lab4.setText("Résultat serveur :")
+        #self.lab4.setText("Résultat serveur :")
         self.editFichier.setPlainText(resultat)
         self.envoyer.setEnabled(False)
 

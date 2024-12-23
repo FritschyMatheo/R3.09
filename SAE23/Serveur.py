@@ -6,6 +6,15 @@ import subprocess
 
 # Fichier de la classe Serveur
 
+# Classes d'erreurs personnalisées pour la compilation/exécution des fichiers C et C++.
+class CompilationError(Exception):
+    # En cas d'erreur de compilation
+    pass
+
+class ExecutionError(Exception):
+    # En cas d'erreur d'exécution'
+    pass
+
 class Serveur():
 
     def __init__(self,nom :str, ip :str = "127.0.0.1", port :int = 1000, occupe :bool = False, consigne :str = ""):
@@ -126,10 +135,7 @@ class Serveur():
             print("Chemin du fichier :", nomFichier)
             print("Extension du fichier :", extension)
             try:
-                if not fichier.strip():
-                    print(f"Le fichier {nomFichier} est vide.")
-                    resultatCode = "Le fichier est vide, il ne s'est donc rien passé du côté du serveur."
-                elif extension == ".txt":
+                if extension == ".txt":
                     print("Fichier texte détecté")
                     time.sleep(1)
                     resultatCode = fichier
@@ -159,26 +165,54 @@ class Serveur():
     def executionCodePython(self, code):
         print("Execution du code Python...")
         start = time.perf_counter()
-        time.sleep(5)
+        time.sleep(2)
         try:
             resultat = subprocess.run(["python", "-c", code], text=True, capture_output=True, check=True)
+            end = time.perf_counter()
             print("resultat :", resultat.stdout)
             resultatFinal = resultat.stdout
-            end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
         except subprocess.CalledProcessError as e:
             resultatFinal = f"Erreur lors de l'exécution du code :\n{e}\n\n{e.stderr}"
+        if not resultatFinal.strip():
+            resultatFinal = "Le programme ne renvoie rien."
         return resultatFinal
     
     def executionCodeC(self, code):
         print("Execution du code C...")
         start = time.perf_counter()
+        time.sleep(3)
+        fichierTemporraire = "TEMPORRAIRE.c"
+        executable = "EXECUTABLE.exe"
+        
+        with open(fichierTemporraire, "w") as f:
+            f.write(code)
+
         try:
-            resultatFinal = f"Code à éxécuter : {code}"
+            compilation = subprocess.run(["gcc", fichierTemporraire, "-o", executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if compilation.returncode != 0:
+                raise CompilationError(f"Erreur rencontrée lors de la compilation du code : {compilation.stderr}")
+            executionCodeCompile = subprocess.run([f"./{executable}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if executionCodeCompile.returncode != 0:
+                raise ExecutionError(f"Erreur rencontrée lors de l'exécution du code : {executionCodeCompile.stderr}")
+            resultatFinal = executionCodeCompile.stdout
             end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except FileNotFoundError:
+            resultatFinal = "Erreur : chemin du fichier introuvable"
+        except CompilationError as e:
+            resultatFinal = e
+        except ExecutionError as e:
+            resultatFinal = e
         except Exception as e:
-            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
+            resultatFinal = f"Erreur lors de la gestion du code :\n{e}"
+        finally:
+            if os.path.exists(fichierTemporraire):
+                os.remove(fichierTemporraire)
+            if os.path.exists(executable):
+                os.remove(executable)
+        if not resultatFinal.strip():
+            resultatFinal = "Le programme ne renvoie rien."
         return resultatFinal
     
     def executionCodeCpp(self, code):
