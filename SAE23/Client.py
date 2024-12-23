@@ -1,7 +1,7 @@
 import socket
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
+from PyQt6.QtCore import QMetaObject, Qt, Q_ARG, pyqtSignal
 import time
 import threading
 
@@ -13,7 +13,7 @@ class Client():
         self.__nom = nom
         self.__socket :socket = socket.socket()
         self.__connecte = etatconnexion
-        self.__resultatCode = ""
+        #self.__resultatCode = ""
     
     def __str__(self) -> str:
         return f"Client : {self.nom}"
@@ -68,6 +68,7 @@ class Client():
 
 
 class MainWindow(QMainWindow):
+    receptionResultat = pyqtSignal(str)
     def __init__(self):
         super().__init__()
         self.client = Client()
@@ -75,6 +76,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon("altodisicon.png"))
 
         # Partie timer d'attente du résultat du code
+        self.receptionResultat.connect(self.__actionResultat)
         self.stopAttente = False
         self.start = 0
 
@@ -211,12 +213,11 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
             self.envoyer.setEnabled(False)
             self.start = time.perf_counter()
+            self.editFichier.setPlainText("En attente du résultat du serveur...")
             threadEcoute = threading.Thread(target=self.__attendreResultat)
             threadEcoute.start()
-            self.lab4.setText("Résultat serveur :")
-            print("self.client.resultatCode :", self.client.resultatCode)
-            self.editFichier.setPlainText(self.client.resultatCode)
-            self.envoyer.setEnabled(False)
+            #self.lab4.setText("Résultat serveur :")
+            #self.envoyer.setEnabled(False)
 
         else:
             self.client.socket.send("annuler".encode())
@@ -224,18 +225,17 @@ class MainWindow(QMainWindow):
             #QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
     
     def __attendreResultat(self):
-        self.editFichier.setPlainText("En attente du résultat du serveur...")
         threadAttente = threading.Thread(target=self.__tempsAttente)
         threadAttente.start()
 
         try:
-            print("Attente")
+            print("Attente resultat")
             resultat = self.client.ecoute()
             print("Recu")
             self.stopAttente = True
             threadAttente.join()
             print(resultat)
-            self.client.resultatCode = resultat
+            self.receptionResultat.emit(resultat)
         
         except Exception as e:
             self.stopAttente = True
@@ -251,7 +251,13 @@ class MainWindow(QMainWindow):
                 Qt.ConnectionType.QueuedConnection,
                 Q_ARG(str, f"Temps depuis l'envoi : {temps} s")
             )
+            print(temps,"s")
             time.sleep(0.02)
+    
+    def __actionResultat(self, resultat):
+        self.lab4.setText("Résultat serveur :")
+        self.editFichier.setPlainText(resultat)
+        self.envoyer.setEnabled(False)
 
     def __actionQuitter(self):
         QApplication.exit(0)

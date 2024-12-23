@@ -3,6 +3,12 @@ import threading
 import sys
 
 if __name__ == "__main__":
+    """
+    Format de la commande pour lancer le serveur :
+
+    "python programmeServeur.py <port compris entre 49152 et 65535>"
+
+    """
 
     ipserveur = "127.0.0.1"
 
@@ -26,6 +32,8 @@ if __name__ == "__main__":
     serveur = Serveur.Serveur("Serveur", ipserveur, portserveur)
 
     while serveur.consigne != "arret":
+        #threadCommande = threading.Thread(target=serveur.commande)
+        #threadCommande.start()
         try :
             conn = serveur.connexion()
             if serveur.occupe == False:
@@ -44,3 +52,4 @@ if __name__ == "__main__":
             print("Arrêt  du serveur suite à :")
             print(f"Erreur : {e}")
             serveur.consigne = "arret"
+    #threadCommande.join()
