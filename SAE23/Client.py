@@ -13,7 +13,7 @@ class Client():
         self.__nom = nom
         self.__socket :socket = socket.socket()
         self.__connecte = etatconnexion
-        #self.__resultatCode = ""
+        self.__annuleReception = False
     
     def __str__(self) -> str:
         return f"Client : {self.nom}"
@@ -31,12 +31,12 @@ class Client():
         return self.__connecte
     
     @property
-    def resultatCode(self) -> str:
-        return self.__resultatCode
+    def annuleReception(self) -> str:
+        return self.__annuleReception
 
-    @resultatCode.setter
-    def resultatCode(self, code):
-        self.__resultatCode = code
+    @annuleReception.setter
+    def annuleReception(self, nouveletat):
+        self.__annuleReception = nouveletat
     
     def connexion(self, ip, port):
         """
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         confirmation = QMessageBox(self)
         confirmation.setWindowTitle("Confirmation envoi de fichier")
         confirmation.setText(f"Voulez vous bien envoyer le fichier {self.nomfichier} ?")
-        
+
         boutonOui = QPushButton("Oui")
         boutonAnnuler = QPushButton("Annuler")
         confirmation.addButton(boutonOui, QMessageBox.ButtonRole.YesRole)
@@ -207,18 +207,26 @@ class MainWindow(QMainWindow):
 
         if confirmation.clickedButton() == boutonOui:
             try:
-                self.client.socket.send(self.cheminfichier.encode())
-                self.client.socket.send(self.fichier.encode())
-                #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
+                if not self.fichier.strip():
+                    self.client.socket.send("annuler".encode())
+                    self.lab4.setText("Envoie du fichier annulé car il était vide.")
+                    self.editFichier.setPlainText("")
+                    QMessageBox.critical(self, "Erreur", "Erreur lors de l'envoi du fichier, ce dernier est vide.")
+                else:
+                    self.client.socket.send(self.cheminfichier.encode())
+                    self.client.socket.send(self.fichier.encode())
+                    #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
             self.envoyer.setEnabled(False)
             self.start = time.perf_counter()
             self.editFichier.setPlainText("En attente du résultat du serveur...")
+            self.arret.setEnabled(False)
+            self.deco.setEnabled(False)
+            self.receptionResultat.connect(self.__actionResultat)
             threadEcoute = threading.Thread(target=self.__attendreResultat)
             threadEcoute.start()
-            #self.lab4.setText("Résultat serveur :")
-            #self.envoyer.setEnabled(False)
+            self.envoyer.setEnabled(False)
 
         else:
             self.client.socket.send("annuler".encode())
@@ -228,7 +236,6 @@ class MainWindow(QMainWindow):
     def __attendreResultat(self):
         threadAttente = threading.Thread(target=self.__tempsAttente)
         threadAttente.start()
-
         try:
             print("Attente resultat")
             resultat = self.client.ecoute()
@@ -237,13 +244,11 @@ class MainWindow(QMainWindow):
             else:
                 print("Recu")
             self.stopAttente = True
-            threadAttente.join()
             print(resultat)
             self.receptionResultat.emit(resultat)
         
         except Exception as e:
             self.stopAttente = True
-            threadAttente.join()
             QMessageBox.critical(self, "Erreur", f"Erreur lors de l'attente du résultat du code : {str(e)}")
     
     def __tempsAttente(self):
@@ -257,10 +262,28 @@ class MainWindow(QMainWindow):
                 Q_ARG(str, f"Temps depuis l'envoi : {temps} s")
             )
             time.sleep(0.02)
+        QMetaObject.invokeMethod(
+            self.arret,
+            "setEnabled",
+            Qt.ConnectionType.QueuedConnection,
+            Q_ARG(bool, True)
+        )
+        QMetaObject.invokeMethod(
+            self.deco,
+            "setEnabled",
+            Qt.ConnectionType.QueuedConnection,
+            Q_ARG(bool, True)
+        )
+        QMetaObject.invokeMethod(
+                self.lab4,
+                "setText",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(str, f"Résultat serveur ({temps} s):")
+            )
         print(temps,"s")
     
     def __actionResultat(self, resultat):
-        self.lab4.setText("Résultat serveur :")
+        #♣self.lab4.setText("Résultat serveur :")
         self.editFichier.setPlainText(resultat)
         self.envoyer.setEnabled(False)
 

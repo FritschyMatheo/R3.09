@@ -119,14 +119,19 @@ class Serveur():
             self.occupe = False
         else:
             nomFichier = test
+            fichier = conn.recv(1024).decode()
             print("Fichier recu : ", nomFichier, "\n")
+            print("Contenu : ", fichier)
             nomFichier, extension = os.path.splitext(nomFichier)
             print("Chemin du fichier :", nomFichier)
             print("Extension du fichier :", extension)
-            fichier = conn.recv(1024).decode()
             try:
-                if extension == ".txt":
+                if not fichier.strip():
+                    print(f"Le fichier {nomFichier} est vide.")
+                    resultatCode = "Le fichier est vide, il ne s'est donc rien passé du côté du serveur."
+                elif extension == ".txt":
                     print("Fichier texte détecté")
+                    time.sleep(1)
                     resultatCode = fichier
                 elif extension == ".py":
                     print("fichier Python détecté")
@@ -137,6 +142,9 @@ class Serveur():
                 elif extension == ".cpp":
                     print("fichier C++ détecté")
                     resultatCode = self.executionCodeCpp(fichier)
+                elif extension == ".java":
+                    print("fichier Java détecté")
+                    resultatCode = self.executionCodeJava(fichier)
                 else:                    
                     print("Extension non supportée :", extension)
                     resultatCode = f"Extension du fichier {extension} non prise en charge"
@@ -149,7 +157,7 @@ class Serveur():
             
 
     def executionCodePython(self, code):
-        print("Execution du code...")
+        print("Execution du code Python...")
         start = time.perf_counter()
         time.sleep(5)
         try:
@@ -163,10 +171,37 @@ class Serveur():
         return resultatFinal
     
     def executionCodeC(self, code):
-        return code, "exécuté"
+        print("Execution du code C...")
+        start = time.perf_counter()
+        try:
+            resultatFinal = f"Code à éxécuter : {code}"
+            end = time.perf_counter()
+            print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except Exception as e:
+            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
+        return resultatFinal
     
     def executionCodeCpp(self, code):
-        return code, "exécuté"
+        print("Execution du code C++...")
+        start = time.perf_counter()
+        try:
+            resultatFinal = f"Code à éxécuter : {code}"
+            end = time.perf_counter()
+            print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except Exception as e:
+            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
+        return resultatFinal
+    
+    def executionCodeJava(self, code):
+        print("Execution du code Java...")
+        start = time.perf_counter()
+        try:
+            resultatFinal = f"Code à éxécuter : {code}"
+            end = time.perf_counter()
+            print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except Exception as e:
+            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
+        return resultatFinal
     
     def envoie(self, conn, resultat):
         print("Envoie du resultat du code exécuté")
