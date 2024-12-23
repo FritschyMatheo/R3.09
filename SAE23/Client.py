@@ -4,7 +4,6 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
 import time
 import threading
-from threading import Thread
 
 # Fichier de la classe Client
 
@@ -14,6 +13,7 @@ class Client():
         self.__nom = nom
         self.__socket :socket = socket.socket()
         self.__connecte = etatconnexion
+        self.__resultatCode = ""
     
     def __str__(self) -> str:
         return f"Client : {self.nom}"
@@ -29,6 +29,14 @@ class Client():
     @property
     def connecte(self) -> bool:
         return self.__connecte
+    
+    @property
+    def resultatCode(self) -> str:
+        return self.__resultatCode
+
+    @resultatCode.setter
+    def resultatCode(self, code):
+        self.__resultatCode = code
     
     def connexion(self, ip, port):
         """
@@ -58,20 +66,6 @@ class Client():
         self.razSocket()
         self.__connecte = False
 
-class CustomThread(Thread):
-    """ Class de Thread modifiée pour pouvoir retourner une fonction dans la partie chrono du temps d'exécution du code. Source : https://youtu.be/DPBm87pTByo"""
-    def __init__(self, group = None, target = None, name = None, args = (), kwargs = {}, Verbose = None):
-        super().__init__(self, group, target, name, args, kwargs)
-        self._return = None
-    
-    def run(self):
-        if self._target is not None:
-            self._return = self._target(*self._args, **self._kwargs)
-            # Le résultat est stocké dans self._return
-    
-    def join(self):
-        Thread.join(self)
-        return self._return # Le résultat self._return est retourné avec le join donc en arrêtant le thread
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -218,9 +212,10 @@ class MainWindow(QMainWindow):
             self.envoyer.setEnabled(False)
             self.start = time.perf_counter()
             threadEcoute = threading.Thread(target=self.__attendreResultat)
-            resultatCode = threadEcoute.start()
+            threadEcoute.start()
             self.lab4.setText("Résultat serveur :")
-            self.editFichier.setPlainText(resultatCode)
+            print("self.client.resultatCode :", self.client.resultatCode)
+            self.editFichier.setPlainText(self.client.resultatCode)
             self.envoyer.setEnabled(False)
 
         else:
@@ -234,12 +229,13 @@ class MainWindow(QMainWindow):
         threadAttente.start()
 
         try:
+            print("Attente")
             resultat = self.client.ecoute()
+            print("Recu")
             self.stopAttente = True
-
             threadAttente.join()
-
-            return resultat
+            print(resultat)
+            self.client.resultatCode = resultat
         
         except Exception as e:
             self.stopAttente = True
@@ -255,8 +251,7 @@ class MainWindow(QMainWindow):
                 Qt.ConnectionType.QueuedConnection,
                 Q_ARG(str, f"Temps depuis l'envoi : {temps} s")
             )
-            time.sleep(0.5)
-
+            time.sleep(0.02)
 
     def __actionQuitter(self):
         QApplication.exit(0)
