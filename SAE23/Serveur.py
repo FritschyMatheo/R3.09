@@ -137,7 +137,7 @@ class Serveur():
             try:
                 if extension == ".txt":
                     print("Fichier texte détecté")
-                    time.sleep(1)
+                    #time.sleep(1)
                     resultatCode = fichier
                 elif extension == ".py":
                     print("fichier Python détecté")
@@ -150,7 +150,7 @@ class Serveur():
                     resultatCode = self.executionCodeCpp(fichier)
                 elif extension == ".java":
                     print("fichier Java détecté")
-                    resultatCode = self.executionCodeJava(fichier)
+                    resultatCode = self.executionCodeJava(fichier, nomFichier)
                 else:                    
                     print("Extension non supportée :", extension)
                     resultatCode = f"Extension du fichier {extension} non prise en charge"
@@ -165,7 +165,7 @@ class Serveur():
     def executionCodePython(self, code):
         print("Execution du code Python...")
         start = time.perf_counter()
-        time.sleep(2)
+        #time.sleep(2)
         try:
             resultat = subprocess.run(["python", "-c", code], text=True, capture_output=True, check=True)
             end = time.perf_counter()
@@ -181,14 +181,14 @@ class Serveur():
     def executionCodeC(self, code):
         print("Execution du code C...")
         start = time.perf_counter()
-        time.sleep(3)
+        #time.sleep(3)
         fichierTemporraire = "TEMPORRAIRE.c"
         executable = "EXECUTABLE-C.exe"
         
-        with open(fichierTemporraire, "w") as f:
-            f.write(code)
-
         try:
+            with open(fichierTemporraire, "w") as f:
+                f.write(code)
+
             compilation = subprocess.run(["gcc", fichierTemporraire, "-o", executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
             if compilation.returncode != 0:
                 raise CompilationError(f"Erreur rencontrée lors de la compilation du code : {compilation.stderr}")
@@ -218,14 +218,13 @@ class Serveur():
     def executionCodeCpp(self, code):
         print("Execution du code C++...")
         start = time.perf_counter()
-        time.sleep(3.6)
+        #time.sleep(3.6)
         fichierTemporraire = "TEMPORRAIRE.cpp"
         executable = "EXECUTABLE-CPP.exe"
 
-        with open(fichierTemporraire, "w") as f:
-            f.write(code)
-
         try:
+            with open(fichierTemporraire, "w") as f:
+                f.write(code)
             compilation = subprocess.run(["g++", fichierTemporraire, "-o", executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
             if compilation.returncode != 0:
                 raise CompilationError(f"Erreur rencontrée lors de la compilation du code : {compilation.stderr}")
@@ -252,16 +251,52 @@ class Serveur():
             resultatFinal = "Le programme ne renvoie rien."
         return resultatFinal
     
-    def executionCodeJava(self, code):
+    def executionCodeJava(self, code, nomFichier):
         print("Execution du code Java...")
-        start = time.perf_counter()
+
         try:
-            resultatFinal = f"Code à éxécuter : {code}"
+            subprocess.run(["javac", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+        except FileNotFoundError:
+            resultatFinal = "Erreur : Java n'est pas installé ou configuré correctement."
+            print(resultatFinal)
+            return resultatFinal
+        
+        start = time.perf_counter()
+        #time.sleep(2.2)
+        #fichierTemporraire = "TEMPORRAIRE.java"
+        classe = str(nomFichier).split("/")[-1]
+        fichierTemporraire = f"{classe}.java"
+        
+        try:
+            with open(fichierTemporraire, "w") as f:
+                f.write(code)
+            compilation = subprocess.run(["javac", fichierTemporraire], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if compilation.returncode != 0:
+                raise CompilationError(f"Erreur rencontrée lors de la compilation du code : \n{compilation.stderr}")
+            executionTemp = subprocess.run(["java", classe], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if executionTemp.returncode != 0:
+                raise ExecutionError(f"Erreur rencontrée lors de l'exécution du code : \n{executionTemp.stderr}")
+            resultatFinal = executionTemp.stdout
             end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except CompilationError as e:
+            resultatFinal = str(e)
+            print(resultatFinal)
+        except ExecutionError as e:
+            resultatFinal = str(e)
+            print(resultatFinal)
         except Exception as e:
-            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
-        return resultatFinal
+            resultatFinal = f"Erreur lors de la gestion du code :\n{e}"
+            print(resultatFinal)
+        finally:
+            if os.path.exists(fichierTemporraire):
+                os.remove(fichierTemporraire)
+            #if os.path.exists(fichierClasse):
+            #    os.remove(fichierClasse)
+            if not resultatFinal.strip():
+                resultatFinal = "Le programme ne renvoie rien."
+            print("Resultat :\n", resultatFinal)
+            return resultatFinal
     
     def envoie(self, conn, resultat):
         print("Envoie du resultat du code exécuté")
