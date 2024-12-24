@@ -183,7 +183,7 @@ class Serveur():
         start = time.perf_counter()
         time.sleep(3)
         fichierTemporraire = "TEMPORRAIRE.c"
-        executable = "EXECUTABLE.exe"
+        executable = "EXECUTABLE-C.exe"
         
         with open(fichierTemporraire, "w") as f:
             f.write(code)
@@ -201,9 +201,9 @@ class Serveur():
         except FileNotFoundError:
             resultatFinal = "Erreur : chemin du fichier introuvable"
         except CompilationError as e:
-            resultatFinal = e
+            resultatFinal = str(e)
         except ExecutionError as e:
-            resultatFinal = e
+            resultatFinal = str(e)
         except Exception as e:
             resultatFinal = f"Erreur lors de la gestion du code :\n{e}"
         finally:
@@ -218,12 +218,38 @@ class Serveur():
     def executionCodeCpp(self, code):
         print("Execution du code C++...")
         start = time.perf_counter()
+        time.sleep(3.6)
+        fichierTemporraire = "TEMPORRAIRE.cpp"
+        executable = "EXECUTABLE-CPP.exe"
+
+        with open(fichierTemporraire, "w") as f:
+            f.write(code)
+
         try:
-            resultatFinal = f"Code à éxécuter : {code}"
+            compilation = subprocess.run(["g++", fichierTemporraire, "-o", executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if compilation.returncode != 0:
+                raise CompilationError(f"Erreur rencontrée lors de la compilation du code : {compilation.stderr}")
+            executionCodeCompile = subprocess.run([f"./{executable}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text = True)
+            if executionCodeCompile.returncode != 0:
+                raise ExecutionError(f"Erreur rencontrée lors de l'exécution du code : {executionCodeCompile.stderr}")
+            resultatFinal = executionCodeCompile.stdout
             end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
+        except FileNotFoundError:
+            resultatFinal = "Erreur : chemin du fichier introuvable"
+        except CompilationError as e:
+            resultatFinal = str(e)
+        except ExecutionError as e:
+            resultatFinal = str(e)
         except Exception as e:
-            resultatFinal = f"Erreur lors de l'exécution du code :\n{e}"
+            resultatFinal = f"Erreur lors de la gestion du code :\n{e}"
+        finally:
+            if os.path.exists(fichierTemporraire):
+                os.remove(fichierTemporraire)
+            if os.path.exists(executable):
+                os.remove(executable)
+        if not resultatFinal.strip():
+            resultatFinal = "Le programme ne renvoie rien."
         return resultatFinal
     
     def executionCodeJava(self, code):
