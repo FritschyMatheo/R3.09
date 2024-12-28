@@ -238,6 +238,7 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.information(self, "Retour du serveur", f"Le serveur est {etatServeur}, veuillez reessayer plus tard ou vous connecter à un autre serveur")
             self.editFichier.setPlainText(f"Serveur {etatServeur}")
+            self.envoyer.setEnabled(False)
 
     def __attendreResultat(self):
         self.stopAttente = False

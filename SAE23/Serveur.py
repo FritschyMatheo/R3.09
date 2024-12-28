@@ -87,13 +87,16 @@ class Serveur():
                     consigneclient = "arret"
                 elif consigneclient == "bye":
                     self.byeclient(conn)
-                elif self.occupe == True:
-                    print("Envoie occupé")
-                    self.envoie(conn, "Occupé")
                 elif consigneclient == "arret":
                     self.arret(conn)
                 elif consigneclient == "envoie fichier":
-                    self.gestionFichier(conn)
+                    if self.occupe == True:
+                        print("Envoie occupé")
+                        self.envoie(conn, "Occupé")
+                    else:
+                        print("Envoie libre")
+                        self.envoie(conn, "libre")
+                        self.gestionFichier(conn)
                 else:
                     print(f"Le client a envoyé : {consigneclient}")
 
@@ -123,8 +126,6 @@ class Serveur():
 
     def gestionFichier(self, conn):
         self.occupe = True
-        print("Envoie libre")
-        self.envoie(conn, "libre")
         print("En attente du fichier client")
         test = conn.recv(1024).decode()
         if test == "annuler":
@@ -202,7 +203,7 @@ class Serveur():
             end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
         except FileNotFoundError:
-            resultatFinal = "Erreur : chemin du fichier introuvable"
+            resultatFinal = "Erreur : Le compilateur de fichiers C (gcc) n'est pas installé ou configuré correctement."
         except CompilationError as e:
             resultatFinal = str(e)
         except ExecutionError as e:
@@ -219,7 +220,7 @@ class Serveur():
         return resultatFinal
     
     def executionCodeCpp(self, code):
-        print("Execution du code C++...")
+        print("Execution du code C++...")  
         start = time.perf_counter()
         #time.sleep(3.6)
         fichierTemporraire = "TEMPORRAIRE.cpp"
@@ -238,7 +239,7 @@ class Serveur():
             end = time.perf_counter()
             print(f"Temps d'exécution du code : {round(end - start, 2)} seconde(s)")
         except FileNotFoundError:
-            resultatFinal = "Erreur : chemin du fichier introuvable"
+            resultatFinal = "Erreur : Le compilateur de fichiers C++ (g++) n'est pas installé ou configuré correctement."
         except CompilationError as e:
             resultatFinal = str(e)
         except ExecutionError as e:
@@ -266,7 +267,6 @@ class Serveur():
         
         start = time.perf_counter()
         #time.sleep(2.2)
-        #fichierTemporraire = "TEMPORRAIRE.java"
         classe = str(nomFichier).split("/")[-1]
         fichierTemporraire = f"{classe}.java"
         
@@ -294,16 +294,16 @@ class Serveur():
         finally:
             if os.path.exists(fichierTemporraire):
                 os.remove(fichierTemporraire)
-            #if os.path.exists(fichierClasse):
-            #    os.remove(fichierClasse)
+            if os.path.exists(f"{classe}.class"):
+                os.remove(f"{classe}.class")
             if not resultatFinal.strip():
                 resultatFinal = "Le programme ne renvoie rien."
             print("Resultat :\n", resultatFinal)
             return resultatFinal
     
-    def envoie(self, conn, resultat):
-        print("Envoie du resultat du code exécuté")
-        conn.send(str(resultat).encode())
+    def envoie(self, conn, message):
+        print(f"Envoie de : {message}")
+        conn.send(str(message).encode())
     
     def byeclient(self, conn):
         conn.close()
