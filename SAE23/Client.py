@@ -194,46 +194,51 @@ class MainWindow(QMainWindow):
         #self.editFichier.setEnabled(False)
         self.client.socket.send("envoie fichier".encode())
 
-        confirmation = QMessageBox(self)
-        confirmation.setWindowTitle("Confirmation envoi de fichier")
-        confirmation.setText(f"Voulez vous bien envoyer le fichier {self.nomfichier} ?")
+        etatServeur = self.client.ecoute()
+        if etatServeur == "libre":
+            confirmation = QMessageBox(self)
+            confirmation.setWindowTitle("Confirmation envoi de fichier")
+            confirmation.setText(f"Voulez vous bien envoyer le fichier {self.nomfichier} ?")
 
-        boutonOui = QPushButton("Oui")
-        boutonAnnuler = QPushButton("Annuler")
-        confirmation.addButton(boutonOui, QMessageBox.ButtonRole.YesRole)
-        confirmation.addButton(boutonAnnuler, QMessageBox.ButtonRole.NoRole)
-        
-        confirmation.exec()
+            boutonOui = QPushButton("Oui")
+            boutonAnnuler = QPushButton("Annuler")
+            confirmation.addButton(boutonOui, QMessageBox.ButtonRole.YesRole)
+            confirmation.addButton(boutonAnnuler, QMessageBox.ButtonRole.NoRole)
+            
+            confirmation.exec()
 
-        if confirmation.clickedButton() == boutonOui:
-            try:
-                if not self.fichier.strip():
-                    self.client.socket.send("annuler".encode())
-                    self.lab4.setText("Envoie du fichier annulé car il était vide.")
-                    self.editFichier.setPlainText("")
-                    raise ValueError
-                else:
-                    self.client.socket.send(self.cheminfichier.encode())
-                    self.client.socket.send(self.fichier.encode())
-                    #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
-                self.envoyer.setEnabled(False)
-                self.editFichier.setPlainText("En attente du résultat du serveur...")
-                self.arret.setEnabled(False)
-                self.deco.setEnabled(False)
-                self.receptionResultat.connect(self.__actionResultat)
-                threadEcoute = threading.Thread(target=self.__attendreResultat)
-                threadEcoute.start()
-                self.envoyer.setEnabled(False)
-            except ValueError:
-                QMessageBox.critical(self, "Erreur", "Erreur lors de l'envoi du fichier, ce dernier est vide.")
-            except Exception as e:
-                QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
+            if confirmation.clickedButton() == boutonOui:
+                try:
+                    if not self.fichier.strip():
+                        self.client.socket.send("annuler".encode())
+                        self.lab4.setText("Envoie du fichier annulé car il était vide.")
+                        self.editFichier.setPlainText("")
+                        raise ValueError
+                    else:
+                        self.client.socket.send(self.cheminfichier.encode())
+                        self.client.socket.send(self.fichier.encode())
+                        #QMessageBox.information(self, "Envoie réussi", f"Le fichier {self.nomfichier} a été envoyé au serveur.")
+                    self.envoyer.setEnabled(False)
+                    self.editFichier.setPlainText("En attente du résultat du serveur...")
+                    self.arret.setEnabled(False)
+                    self.deco.setEnabled(False)
+                    self.receptionResultat.connect(self.__actionResultat)
+                    threadEcoute = threading.Thread(target=self.__attendreResultat)
+                    threadEcoute.start()
+                    self.envoyer.setEnabled(False)
+                except ValueError:
+                    QMessageBox.critical(self, "Erreur", "Erreur lors de l'envoi du fichier, ce dernier est vide.")
+                except Exception as e:
+                    QMessageBox.critical(self, "Erreur", f"Erreur lors de l'envoi du fichier : {str(e)}")
 
+            else:
+                self.client.socket.send("annuler".encode())
+                self.lab4.setText("Envoie du fichier annulé")
+                #QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
         else:
-            self.client.socket.send("annuler".encode())
-            self.lab4.setText("Envoie du fichier annulé")
-            #QMessageBox.information(self, "Annulation", "Envoi de fichier annulé.")
-    
+            QMessageBox.information(self, "Retour du serveur", f"Le serveur est {etatServeur}, veuillez reessayer plus tard ou vous connecter à un autre serveur")
+            self.editFichier.setPlainText(f"Serveur {etatServeur}")
+
     def __attendreResultat(self):
         self.stopAttente = False
         threadAttente = threading.Thread(target=self.__tempsAttente)

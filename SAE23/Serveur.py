@@ -84,10 +84,12 @@ class Serveur():
             while consigneclient != "arret" and consigneclient != "bye":
                 consigneclient = conn.recv(1024).decode()
                 if not consigneclient:
-                    print("Client déconnecté")
-                    break
+                    consigneclient = "arret"
                 elif consigneclient == "bye":
                     self.byeclient(conn)
+                elif self.occupe == True:
+                    print("Envoie occupé")
+                    self.envoie(conn, "Occupé")
                 elif consigneclient == "arret":
                     self.arret(conn)
                 elif consigneclient == "envoie fichier":
@@ -121,6 +123,8 @@ class Serveur():
 
     def gestionFichier(self, conn):
         self.occupe = True
+        print("Envoie libre")
+        self.envoie(conn, "libre")
         print("En attente du fichier client")
         test = conn.recv(1024).decode()
         if test == "annuler":
@@ -158,10 +162,9 @@ class Serveur():
             except Exception as e:
                 print("Problème d'exécution du code :")
                 print(f"Erreur : {e}")
+            finally:
                 self.occupe = False
-            self.occupe = False
             
-
     def executionCodePython(self, code):
         print("Execution du code Python...")
         start = time.perf_counter()
@@ -304,7 +307,7 @@ class Serveur():
     
     def byeclient(self, conn):
         conn.close()
-        self.occupe = False
+        #self.occupe = False
         print("Connexion au client terminée")
 
     def arret(self, conn):
