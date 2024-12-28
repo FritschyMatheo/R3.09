@@ -6,13 +6,17 @@ import subprocess
 
 # Fichier de la classe Serveur
 
-# Classes d'erreurs personnalisées pour la compilation/exécution des fichiers C et C++.
+# Classes d'erreurs personnalisées pour la compilation/exécution des fichiers C et C++ et pour le port du serveur.
 class CompilationError(Exception):
     # En cas d'erreur de compilation
     pass
 
 class ExecutionError(Exception):
     # En cas d'erreur d'exécution'
+    pass
+
+class PortError(Exception):
+    # Quand le port n'est pas dans la plage
     pass
 
 class Serveur():

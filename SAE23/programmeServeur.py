@@ -1,4 +1,5 @@
 import Serveur as Serveur
+from Serveur import PortError
 import threading
 import sys
 
@@ -13,16 +14,17 @@ if __name__ == "__main__":
     ipserveur = "127.0.0.1"
 
     if len(sys.argv) == 1:
-        portserveur = 60000
+        portserveur = 50000
     elif len(sys.argv) == 2:
         try:
             portserveur = int(sys.argv[1])
-            if portserveur < 49152 or portserveur > 65535:
-                raise OSError
         except ValueError:
-            print(f"Le port {portserveur} n'est pas un entier.")
+            print(f"Le port {sys.argv[1]} n'est pas un entier.")
             sys.exit(1)
-        except OSError:
+        try:
+            if portserveur < 49152 or portserveur > 65535:
+                raise PortError
+        except PortError:
             print(f"Le port {portserveur} n'est pas dans la plage dynamique des ports (49152 à 65535).")
             sys.exit(1)
     elif len(sys.argv) > 2:
