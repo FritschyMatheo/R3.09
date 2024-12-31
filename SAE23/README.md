@@ -2,6 +2,7 @@
 
 Auteur du projet : **FRITSCHY Mathéo**
 
+*Ce dossier s'appelle SAE23 mais est bien déstiné à la SAE32, c'est une erreur de frappe qui n'a pas pu être corrigfé en raison du rendu du lien sur Moodle qui ne peut plus être modifié...*
 
 Rendus de la SAE3.02 dans le dossier Rendus:
 
