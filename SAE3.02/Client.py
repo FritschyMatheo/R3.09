@@ -171,9 +171,9 @@ class MainWindow(QMainWindow):
             port = int(port)
             self.client.connexion(ip, port)
             retourserv = self.client.socket.recv(1024).decode()
-            #QMessageBox.information(self, "Connexion au serveur", retourserv)
             if retourserv == "Le serveur est occupé, veuillez reessayer plus tard ou vous connecter à un autre serveur":
                 self.port.setText("")
+                QMessageBox.information(self, "Connexion au serveur", retourserv)
                 self.client.bye()
             else:
                 self.stack.setCurrentWidget(self.widgetConnecte)
