@@ -173,7 +173,7 @@ class Serveur():
     def executionCodePython(self, code):
         print("Execution du code Python...")
         start = time.perf_counter()
-        #time.sleep(2)
+        time.sleep(2)
         try:
             resultat = subprocess.run(["python", "-c", code], text=True, capture_output=True, check=True)
             end = time.perf_counter()
@@ -189,7 +189,7 @@ class Serveur():
     def executionCodeC(self, code):
         print("Execution du code C...")
         start = time.perf_counter()
-        #time.sleep(3)
+        time.sleep(3)
         fichierTemporraire = "TEMPORRAIRE.c"
         executable = "EXECUTABLE-C.exe"
         
@@ -226,7 +226,7 @@ class Serveur():
     def executionCodeCpp(self, code):
         print("Execution du code C++...")  
         start = time.perf_counter()
-        #time.sleep(3.6)
+        time.sleep(4)
         fichierTemporraire = "TEMPORRAIRE.cpp"
         executable = "EXECUTABLE-CPP.exe"
 
@@ -270,7 +270,7 @@ class Serveur():
             return resultatFinal
         
         start = time.perf_counter()
-        #time.sleep(2.2)
+        time.sleep(2)
         classe = str(nomFichier).split("/")[-1]
         fichierTemporraire = f"{classe}.java"
         
