@@ -1,6 +1,5 @@
 import socket
 import time
-#import threading
 import os
 import subprocess
 
@@ -113,20 +112,6 @@ class Serveur():
             self.occupe = False
         finally:
             print("Déconnexion du client.")
-    
-    def commande(self):
-        commande = ""
-        try:
-            while commande != "arret":
-                commande = input()
-            self.consigne = "arret"
-        except KeyboardInterrupt:
-            print("Arrêt manuel du serv")
-            self.consigne = "arret"
-        except Exception as e:
-            print("Arrêt  du serveur suite à :")
-            print(f"Erreur : {e}")
-            self.consigne = "arret"
 
     def gestionFichier(self, conn):
         self.occupe = True
@@ -311,7 +296,6 @@ class Serveur():
     
     def byeclient(self, conn):
         conn.close()
-        #self.occupe = False
         print("Connexion au client terminée")
 
     def arret(self, conn):

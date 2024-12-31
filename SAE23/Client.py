@@ -309,7 +309,6 @@ class MainWindow(QMainWindow):
         print(temps,"s")
     
     def __actionResultat(self, resultat):
-        #self.lab4.setText("Résultat serveur :")
         self.editFichier.setPlainText(resultat)
         self.envoyer.setEnabled(False)
 
