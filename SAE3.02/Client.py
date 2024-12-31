@@ -8,15 +8,21 @@ import threading
 # Fichier de la classe Client
 
 class Client():
-
-    def __init__(self, nom :str = "Client", etatconnexion :bool = False):
+    """
+    Classe de construction d'un client au format graphique qui possède les attributs suivants :
+        nom :str
+        etatconnexion :bool
+        socketClient :socket
+    """
+    def __init__(self, nom :str = "Client", etatconnexion :bool = False, socketClient :socket = socket.socket()):
         self.__nom = nom
-        self.__socket :socket = socket.socket()
         self.__connecte = etatconnexion
-        self.__annuleReception = False
+        self.__socket = socketClient
     
     def __str__(self) -> str:
         return f"Client : {self.nom}"
+
+    # Les getters des attributs de la classe Client
 
     @property
     def nom(self) -> str:
@@ -30,17 +36,9 @@ class Client():
     def connecte(self) -> bool:
         return self.__connecte
     
-    @property
-    def annuleReception(self) -> str:
-        return self.__annuleReception
-
-    @annuleReception.setter
-    def annuleReception(self, nouveletat):
-        self.__annuleReception = nouveletat
-    
-    def connexion(self, ip, port):
+    def connexion(self, ip :str, port :int):
         """
-        Fonction d'un client qui tente de se connecter à un serveur
+        Méthode d'un client qui tente de se connecter à un serveur via son port et son ip
         """
         try:
             self.__socket.connect((ip, port))
@@ -48,26 +46,41 @@ class Client():
         except Exception as erreur:
             raise erreur
     
-    def envoyerDemande(self, demande):
+    def envoyerDemande(self, demande :str):
+        """
+        Méthode qui permet d'envoyer un message/une demande à un serveur si le client est bien connecté, sinon renvoie une erreur de connexion.
+        """
         if self.__connecte == False:
             raise ConnectionError("Le client doit d'abord se connecter à un serveur.")
         else:
             self.__socket.send(demande.encode())
 
     def ecoute(self):
+        """
+        Méthode qui permet au client de recevoir un message d'un serveur, retourne la réponse.
+        """
         reply = self.socket.recv(1024).decode()
         return reply
         
     def razSocket(self):
+        """
+        Méthode qui remet le socket du client à zéro en cas de déconnexion pour permettre à ce dernier de se reconnecter à un serveur qui aurait fermé ce socket ou s'il a eu une erreur.
+        """
         self.__socket = socket.socket()
 
     def bye(self):
+        """
+        Méthode qui déconnecte le client d'un serveur et qui appelle la remise à zero du socket du client.
+        """
         self.socket.close()
         self.razSocket()
         self.__connecte = False
 
 
 class MainWindow(QMainWindow):
+    """
+    Classe qui initialise la partie graphique du client grâce à la librairie PyQt6.
+    """
     receptionResultat = pyqtSignal(str)
     def __init__(self):
         super().__init__()
@@ -91,8 +104,9 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.widgetConnexion)
 
     def ecranConnexion(self):
-
-        # Ecran de connexion
+        """
+        Méthode qui créée l'écran de connexion du client au serveur et qui permet d'entrer l'ip et le port du serveur, de se connecter et de quitter.
+        """
         self.widgetConnexion = QWidget()
         self.stack.addWidget(self.widgetConnexion)
         self.grid = QGridLayout(self.widgetConnexion)
@@ -105,7 +119,6 @@ class MainWindow(QMainWindow):
         self.connexion = QPushButton("Se connecter")
         self.quit = QPushButton("Quitter")
 
-        # Ajouter les composants au grid ayout
         self.grid.addWidget(lab1, 0, 0, 1, 2)
         self.grid.addWidget(lab2, 1, 0)
         self.grid.addWidget(self.ip, 1, 1)
@@ -118,8 +131,9 @@ class MainWindow(QMainWindow):
         self.quit.clicked.connect(self.__actionQuitter)
 
     def ecranConnecte(self):
-        
-        # Ecran connecté
+        """
+        Méthode qui créée la fenêtre du client quand il est connecté au serveur.
+        """
         self.widgetConnecte = QWidget()
         self.stack.addWidget(self.widgetConnecte)
         self.grid2 = QGridLayout(self.widgetConnecte)
@@ -148,19 +162,21 @@ class MainWindow(QMainWindow):
 
 
     def __actionConnexion(self):
+        """
+        Cette action appelle la méthode de classe connexion du client et lui donne les paramètres ip et port depuis les emplacements de texte de la partie graphique connexion.
+        """
         ip = self.ip.text()
         port = self.port.text()
         try:
             port = int(port)
             self.client.connexion(ip, port)
             retourserv = self.client.socket.recv(1024).decode()
-            QMessageBox.information(self, "Connexion au serveur", retourserv)
+            #QMessageBox.information(self, "Connexion au serveur", retourserv)
             if retourserv == "Le serveur est occupé, veuillez reessayer plus tard ou vous connecter à un autre serveur":
                 self.port.setText("")
                 self.client.bye()
             else:
                 self.stack.setCurrentWidget(self.widgetConnecte)
-
         except ValueError:
             QMessageBox.warning(self, "Erreur port", "Le port doit être un entier")
             self.port.setText("")
@@ -191,7 +207,6 @@ class MainWindow(QMainWindow):
 
     def __actionEnvoyer(self):
         self.fichier = self.editFichier.toPlainText()
-        #self.editFichier.setEnabled(False)
         self.client.socket.send("envoie fichier".encode())
 
         etatServeur = self.client.ecoute()
@@ -245,14 +260,15 @@ class MainWindow(QMainWindow):
         threadAttente = threading.Thread(target=self.__tempsAttente)
         threadAttente.start()
         try:
-            print("Attente resultat")
+            print("Attente de la réponse du serveur...")
             resultat = self.client.ecoute()
             if "non prise en charge" in resultat:
-                print("Fichier non pris en charge")
+                print("Type de fichier non pris en charge")
+                QMessageBox.critical(self, "Erreur", "Erreur, le type de fichier n'est pas pris en compte.")
             else:
                 print("Recu")
             self.stopAttente = True
-            print(resultat)
+            #print(resultat)
             self.receptionResultat.emit(resultat)
         
         except Exception as e:
@@ -260,7 +276,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Erreur", f"Erreur lors de l'attente du résultat du code : {str(e)}")
     
     def __tempsAttente(self):
-        print("Thread temps lancé")
         start = time.perf_counter()
         temps = 0
         while self.stopAttente == False:
