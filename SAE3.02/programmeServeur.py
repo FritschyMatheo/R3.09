@@ -34,8 +34,6 @@ if __name__ == "__main__":
     serveur = Serveur.Serveur("Serveur", ipserveur, portserveur)
 
     while serveur.consigne != "arret":
-        #threadCommande = threading.Thread(target=serveur.commande)
-        #threadCommande.start()
         try :
             conn = serveur.connexion()
             if serveur.occupe == False:
@@ -50,8 +48,13 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("Arrêt manuel du serv")
             serveur.consigne = "arret"
+        except OSError as e:
+            if e.errno == 10038:
+                #Erreur car le socket est déjà fermé
+                pass
+            else:
+                print("OSError :", e)
         except Exception as e:
             print("Arrêt  du serveur suite à :")
             print(f"Erreur : {e}")
             serveur.consigne = "arret"
-    #threadCommande.join()
